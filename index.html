@@ -1,0 +1,1416 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>2次関数 変域ビジュアライザー | 定義域と値域を目で見て理解</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter & Noto Sans JP -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Noto+Sans+JP:wght@400;500;700;900&display=swap"
+    rel="stylesheet"
+  />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Noto Sans JP"', '"Inter"', 'sans-serif'],
+            math: ['"Inter"', '"Noto Sans JP"', 'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    /* カスタムスライダーのスタイル（タッチ操作しやすい大きさ） */
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      height: 8px;
+      border-radius: 9999px;
+      outline: none;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 24px;
+      height: 24px;
+      border-radius: 9999px;
+      background: #ffffff;
+      border: 3px solid currentColor;
+      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.2);
+      cursor: pointer;
+      transition: transform 0.15s ease;
+    }
+    input[type="range"]::-webkit-slider-thumb:hover,
+    input[type="range"]::-webkit-slider-thumb:active {
+      transform: scale(1.15);
+    }
+    input[type="range"]::-moz-range-thumb {
+      width: 24px;
+      height: 24px;
+      border-radius: 9999px;
+      background: #ffffff;
+      border: 3px solid currentColor;
+      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.2);
+      cursor: pointer;
+    }
+    /* 分数表示用スタイル */
+    .math-frac {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      vertical-align: middle;
+      line-height: 1.05;
+      margin: 0 2px;
+      font-size: 0.78em;
+    }
+    .math-frac .num {
+      border-bottom: 2px solid currentColor;
+      padding: 0 3px 1px;
+    }
+    .math-frac .den {
+      padding: 1px 3px 0;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
+  <!-- ヘッダー -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-20 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-sm shrink-0">
+          <!-- 放物線アイコン -->
+          <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+            <path d="M3 5 C 8 22, 16 22, 21 5" />
+            <line x1="2" y1="18" x2="22" y2="18" stroke-opacity="0.45" stroke-width="1.5" />
+            <line x1="12" y1="3" x2="12" y2="21" stroke-opacity="0.45" stroke-width="1.5" />
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-lg sm:text-xl font-extrabold text-slate-900 tracking-tight leading-tight">
+            2次関数 変域ビジュアライザー
+          </h1>
+          <p class="text-xs sm:text-sm text-slate-500">
+            $y = ax^2$ の「<span class="text-blue-600 font-bold">定義域（xの変域）</span>」と「<span class="text-orange-600 font-bold">値域（yの変域）</span>」を目で見て理解しよう
+          </p>
+        </div>
+      </div>
+
+      <!-- 家庭教師向け：クイズ（答えを隠す）モードトグル -->
+      <div class="flex items-center gap-3 bg-slate-100 px-3.5 py-2 rounded-xl border border-slate-200">
+        <span class="text-xs sm:text-sm font-bold text-slate-700 flex items-center gap-1.5">
+          <svg class="w-4 h-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          値域（答え）を隠す
+        </span>
+        <button
+          id="quizToggleBtn"
+          type="button"
+          role="switch"
+          aria-checked="false"
+          class="relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent bg-slate-300 transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+        >
+          <span
+            id="quizToggleKnob"
+            class="pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out translate-x-0"
+          ></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- メインコンテンツ -->
+  <main class="max-w-7xl w-full mx-auto px-4 sm:px-6 py-5 flex-1">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+      <!-- 左カラム：インタラクティブグラフ（Canvas） -->
+      <section class="lg:col-span-7 flex flex-col gap-4">
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+          <!-- グラフ上部バー（凡例＆操作ヒント） -->
+          <div class="px-4 py-3 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2 bg-slate-50/70">
+            <div class="flex flex-wrap items-center gap-3 text-xs sm:text-sm font-semibold">
+              <span class="inline-flex items-center gap-1.5 text-blue-700 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-200">
+                <span class="w-3 h-1.5 rounded-full bg-blue-600 inline-block"></span>
+                定義域 (xの変域)
+              </span>
+              <span class="inline-flex items-center gap-1.5 text-orange-700 bg-orange-50 px-2.5 py-1 rounded-lg border border-orange-200">
+                <span class="w-3 h-1.5 rounded-full bg-orange-500 inline-block"></span>
+                値域 (yの変域)
+              </span>
+              <span class="inline-flex items-center gap-1.5 text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-200">
+                <span class="w-3 h-1.5 rounded-full bg-indigo-600 inline-block"></span>
+                有効なグラフ
+              </span>
+            </div>
+            <span class="text-xs text-slate-400 hidden sm:inline">
+              ※ x軸上の青い丸をドラッグしても範囲を変えられます
+            </span>
+          </div>
+
+          <!-- Canvasコンテナ（レスポンシブ正方形〜横長） -->
+          <div id="canvasWrapper" class="relative w-full aspect-[4/3] sm:aspect-[16/13] bg-white touch-none select-none">
+            <canvas id="graphCanvas" class="block w-full h-full"></canvas>
+
+            <!-- アニメーション中の点P座標オーバーレイ -->
+            <div
+              id="pointPBadge"
+              class="hidden absolute top-3 left-3 bg-slate-900/90 text-white px-3.5 py-2 rounded-xl shadow-lg text-xs sm:text-sm font-math backdrop-blur-sm pointer-events-none"
+            >
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span id="pointPText">点P (0, 0)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- グラフ下部バー：点Pアニメーション操作 -->
+          <div class="px-4 py-3.5 border-t border-slate-100 bg-slate-50/70 flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-2.5">
+              <button
+                id="animateBtn"
+                type="button"
+                class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] text-white font-bold text-sm shadow-sm transition cursor-pointer"
+              >
+                <svg id="playIcon" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
+                </svg>
+                <span id="animateBtnText">点Pを動かして確認</span>
+              </button>
+              <button
+                id="stopAnimateBtn"
+                type="button"
+                class="hidden inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 font-bold text-sm transition cursor-pointer"
+              >
+                リセット
+              </button>
+            </div>
+            <p class="text-xs text-slate-500">
+              点Pを左から右へ動かし、x軸とy軸の影の動きを観察できます
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 右カラム：数式・解説・操作パネル -->
+      <section class="lg:col-span-5 flex flex-col gap-4">
+
+        <!-- 1. リアルタイム数式＆変域パネル -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-5">
+          <!-- 関数式 -->
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-3.5">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-400">現在の2次関数</span>
+            <div id="equationDisplay" class="text-2xl sm:text-3xl font-extrabold font-math text-slate-900">
+              y = x²
+            </div>
+          </div>
+
+          <!-- 定義域と値域の2カラムカード -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <!-- 定義域 (x) -->
+            <div class="rounded-xl bg-blue-50/80 border-2 border-blue-200 p-3.5">
+              <div class="text-xs font-bold text-blue-700 mb-1 flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-blue-600"></span>
+                定義域（xの変域）
+              </div>
+              <div id="domainDisplay" class="text-xl sm:text-2xl font-extrabold font-math text-blue-900 tracking-tight">
+                -2 ≦ x ≦ 3
+              </div>
+            </div>
+
+            <!-- 値域 (y) -->
+            <div id="rangeCard" class="rounded-xl bg-orange-50/80 border-2 border-orange-200 p-3.5 relative transition-colors">
+              <div class="text-xs font-bold text-orange-700 mb-1 flex items-center justify-between">
+                <span class="flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-orange-500"></span>
+                  値域（yの変域）
+                </span>
+                <span id="quizBadge" class="hidden text-[10px] bg-amber-200 text-amber-900 px-1.5 py-0.5 rounded font-bold">クイズ中</span>
+              </div>
+              <div id="rangeDisplay" class="text-xl sm:text-2xl font-extrabold font-math text-orange-900 tracking-tight">
+                0 ≦ y ≦ 9
+              </div>
+              <!-- クイズ時の答え合わせボタン -->
+              <button
+                id="revealAnswerBtn"
+                type="button"
+                class="hidden mt-2 w-full py-1.5 px-3 rounded-lg bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold shadow-sm transition cursor-pointer"
+              >
+                答え合わせをする
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. わかりやすい解説ボックス -->
+        <div id="explanationBox" class="rounded-2xl border-2 p-4 shadow-sm transition-colors bg-amber-50 border-amber-200">
+          <div class="flex items-start gap-3">
+            <div id="explanationIcon" class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-lg bg-amber-100 text-amber-700">
+              💡
+            </div>
+            <div class="flex-1 min-w-0">
+              <h2 id="explanationTitle" class="text-sm sm:text-base font-extrabold text-amber-900 mb-1">
+                ここがポイント！
+              </h2>
+              <p id="explanationText" class="text-xs sm:text-sm leading-relaxed text-amber-950/90 font-medium">
+                解説がここに表示されます。
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. 直感的な操作パネル -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-5">
+
+          <!-- 授業用プリセットボタン -->
+          <div>
+            <div class="text-xs font-bold text-slate-500 mb-2 flex items-center gap-1.5">
+              <span>📚 授業用プリセット（典型パターン）</span>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                data-preset="basic"
+                class="preset-btn text-left px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-indigo-50 hover:border-indigo-300 text-xs sm:text-sm font-bold text-slate-700 transition cursor-pointer"
+              >
+                ① 基本<span class="block text-[11px] font-normal text-slate-500">0をまたがない</span>
+              </button>
+              <button
+                type="button"
+                data-preset="trap-up"
+                class="preset-btn text-left px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-indigo-50 hover:border-indigo-300 text-xs sm:text-sm font-bold text-slate-700 transition cursor-pointer"
+              >
+                ② ひっかけ！<span class="block text-[11px] font-normal text-slate-500">0をまたぐ・上向き</span>
+              </button>
+              <button
+                type="button"
+                data-preset="trap-down"
+                class="preset-btn text-left px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-indigo-50 hover:border-indigo-300 text-xs sm:text-sm font-bold text-slate-700 transition cursor-pointer"
+              >
+                ③ ひっかけ！<span class="block text-[11px] font-normal text-slate-500">0をまたぐ・下向き</span>
+              </button>
+              <button
+                type="button"
+                data-preset="symmetric"
+                class="preset-btn text-left px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-indigo-50 hover:border-indigo-300 text-xs sm:text-sm font-bold text-slate-700 transition cursor-pointer"
+              >
+                ④ 左右対称<span class="block text-[11px] font-normal text-slate-500">両端のyが同じ</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- 係数 a の操作 -->
+          <div class="border-t border-slate-100 pt-4">
+            <div class="flex items-center justify-between mb-2">
+              <label for="sliderA" class="text-sm font-bold text-slate-700">
+                比例定数 <span class="font-math text-indigo-600">a</span> の値
+              </label>
+              <span id="valALabel" class="text-sm font-extrabold font-math bg-indigo-50 text-indigo-700 px-2.5 py-0.5 rounded-lg border border-indigo-200">
+                a = 1
+              </span>
+            </div>
+            <!-- スライダー（-2 〜 2、内部インデックスで0をスキップ） -->
+            <input
+              id="sliderA"
+              type="range"
+              min="0"
+              max="7"
+              step="1"
+              value="5"
+              class="w-full bg-indigo-100 text-indigo-600"
+            />
+            <div class="flex justify-between text-[11px] font-math text-slate-400 px-1 mt-1">
+              <span>-2</span>
+              <span>-1</span>
+              <span>-0.5</span>
+              <span>0.5</span>
+              <span>1</span>
+              <span>2</span>
+            </div>
+            <!-- クイックボタン -->
+            <div class="flex flex-wrap gap-1.5 mt-3">
+              <button type="button" data-a="1" class="quick-a-btn px-2.5 py-1.5 rounded-lg text-xs font-bold font-math border border-slate-200 bg-white hover:bg-indigo-50 hover:border-indigo-300 transition cursor-pointer">a = 1</button>
+              <button type="button" data-a="0.5" class="quick-a-btn px-2.5 py-1.5 rounded-lg text-xs font-bold font-math border border-slate-200 bg-white hover:bg-indigo-50 hover:border-indigo-300 transition cursor-pointer">a = 0.5</button>
+              <button type="button" data-a="2" class="quick-a-btn px-2.5 py-1.5 rounded-lg text-xs font-bold font-math border border-slate-200 bg-white hover:bg-indigo-50 hover:border-indigo-300 transition cursor-pointer">a = 2</button>
+              <button type="button" data-a="-1" class="quick-a-btn px-2.5 py-1.5 rounded-lg text-xs font-bold font-math border border-slate-200 bg-white hover:bg-indigo-50 hover:border-indigo-300 transition cursor-pointer">a = -1</button>
+              <button type="button" data-a="-0.5" class="quick-a-btn px-2.5 py-1.5 rounded-lg text-xs font-bold font-math border border-slate-200 bg-white hover:bg-indigo-50 hover:border-indigo-300 transition cursor-pointer">a = -0.5</button>
+            </div>
+          </div>
+
+          <!-- 定義域（x_min, x_max）の操作 -->
+          <div class="border-t border-slate-100 pt-4 flex flex-col gap-3.5">
+            <div>
+              <div class="flex items-center justify-between mb-1.5">
+                <label for="sliderXMin" class="text-sm font-bold text-slate-700">
+                  定義域の左端（<span class="font-math text-blue-600">x</span> の最小値）
+                </label>
+                <span id="valXMinLabel" class="text-sm font-extrabold font-math bg-blue-50 text-blue-700 px-2.5 py-0.5 rounded-lg border border-blue-200">
+                  -2
+                </span>
+              </div>
+              <input
+                id="sliderXMin"
+                type="range"
+                min="-4"
+                max="4"
+                step="0.5"
+                value="-2"
+                class="w-full bg-blue-100 text-blue-600"
+              />
+            </div>
+
+            <div>
+              <div class="flex items-center justify-between mb-1.5">
+                <label for="sliderXMax" class="text-sm font-bold text-slate-700">
+                  定義域の右端（<span class="font-math text-blue-600">x</span> の最大値）
+                </label>
+                <span id="valXMaxLabel" class="text-sm font-extrabold font-math bg-blue-50 text-blue-700 px-2.5 py-0.5 rounded-lg border border-blue-200">
+                  3
+                </span>
+              </div>
+              <input
+                id="sliderXMax"
+                type="range"
+                min="-4"
+                max="4"
+                step="0.5"
+                value="3"
+                class="w-full bg-blue-100 text-blue-600"
+              />
+            </div>
+            <div class="flex justify-between text-[11px] font-math text-slate-400 px-1 -mt-2">
+              <span>-4</span>
+              <span>-2</span>
+              <span>0</span>
+              <span>2</span>
+              <span>4</span>
+            </div>
+          </div>
+
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    /**
+     * 2次関数 変域ビジュアライザー メインスクリプト
+     * 状態管理・数学計算・Canvas描画・アニメーション・ドラッグ操作を一元管理
+     */
+    (function () {
+      'use strict';
+
+      // ==========================================
+      // 1. アプリケーション状態と定数
+      // ==========================================
+      // 係数 a の選択肢（a = 0 は2次関数にならないためスキップ）
+      const A_VALUES = [-2, -1.5, -1, -0.5, 0.5, 1, 1.5, 2];
+
+      const state = {
+        a: 1,
+        xMin: -2,
+        xMax: 3,
+        quizMode: false,
+        // 点Pアニメーション状態
+        anim: {
+          running: false,
+          active: false, // 停止中も点Pを表示しているか
+          progress: 0,   // 0.0 〜 1.0
+          currentX: -2,
+          lastTime: 0,
+          rafId: null,
+        },
+        // Canvas上でのハンドルドラッグ状態
+        dragTarget: null, // 'min' | 'max' | null
+      };
+
+      // DOM要素の取得
+      const canvas = document.getElementById('graphCanvas');
+      const ctx = canvas.getContext('2d');
+      const canvasWrapper = document.getElementById('canvasWrapper');
+
+      const equationDisplay = document.getElementById('equationDisplay');
+      const domainDisplay = document.getElementById('domainDisplay');
+      const rangeDisplay = document.getElementById('rangeDisplay');
+      const rangeCard = document.getElementById('rangeCard');
+      const quizBadge = document.getElementById('quizBadge');
+      const revealAnswerBtn = document.getElementById('revealAnswerBtn');
+
+      const explanationBox = document.getElementById('explanationBox');
+      const explanationIcon = document.getElementById('explanationIcon');
+      const explanationTitle = document.getElementById('explanationTitle');
+      const explanationText = document.getElementById('explanationText');
+
+      const sliderA = document.getElementById('sliderA');
+      const sliderXMin = document.getElementById('sliderXMin');
+      const sliderXMax = document.getElementById('sliderXMax');
+      const valALabel = document.getElementById('valALabel');
+      const valXMinLabel = document.getElementById('valXMinLabel');
+      const valXMaxLabel = document.getElementById('valXMaxLabel');
+
+      const quizToggleBtn = document.getElementById('quizToggleBtn');
+      const quizToggleKnob = document.getElementById('quizToggleKnob');
+
+      const animateBtn = document.getElementById('animateBtn');
+      const animateBtnText = document.getElementById('animateBtnText');
+      const stopAnimateBtn = document.getElementById('stopAnimateBtn');
+      const pointPBadge = document.getElementById('pointPBadge');
+      const pointPText = document.getElementById('pointPText');
+
+      // ==========================================
+      // 2. 数学計算ユーティリティ
+      // ==========================================
+
+      /**
+       * 数値を中学生に見やすい文字列に整形（末尾の不要な0を削除、-0を0に）
+       */
+      function fmt(num) {
+        if (Math.abs(num) < 1e-9) return '0';
+        const rounded = Math.round(num * 1000) / 1000;
+        return String(rounded);
+      }
+
+      /**
+       * 2次関数の値を計算: y = a * x^2
+       */
+      function calcY(a, x) {
+        const val = a * x * x;
+        return Math.abs(val) < 1e-9 ? 0 : val;
+      }
+
+      /**
+       * 現在の状態から値域（yMin, yMax）と頂点包含フラグを計算
+       */
+      function computeRange() {
+        const { a, xMin, xMax } = state;
+        const yLeft = calcY(a, xMin);
+        const yRight = calcY(a, xMax);
+        const includesZero = xMin <= 0 && xMax >= 0;
+        const strictlyCrossesZero = xMin < 0 && xMax > 0;
+
+        let yMin, yMax;
+        if (a > 0) {
+          yMin = includesZero ? 0 : Math.min(yLeft, yRight);
+          yMax = Math.max(yLeft, yRight);
+        } else {
+          yMin = Math.min(yLeft, yRight);
+          yMax = includesZero ? 0 : Math.max(yLeft, yRight);
+        }
+
+        return {
+          yLeft,
+          yRight,
+          yMin,
+          yMax,
+          includesZero,
+          strictlyCrossesZero,
+          isSymmetric: Math.abs(xMin + xMax) < 1e-9 && xMin !== 0,
+          isSinglePoint: Math.abs(xMin - xMax) < 1e-9,
+        };
+      }
+
+      /**
+       * 関数式のHTML表示を生成（1や-1を省略、0.5系をわかりやすく表示）
+       */
+      function formatEquationHTML(a) {
+        if (a === 1) return 'y = x<sup>2</sup>';
+        if (a === -1) return 'y = &minus;x<sup>2</sup>';
+        if (a === 0.5) {
+          return 'y = <span class="math-frac"><span class="num">1</span><span class="den">2</span></span>x<sup>2</sup>';
+        }
+        if (a === -0.5) {
+          return 'y = &minus;<span class="math-frac"><span class="num">1</span><span class="den">2</span></span>x<sup>2</sup>';
+        }
+        if (a === 1.5) {
+          return 'y = <span class="math-frac"><span class="num">3</span><span class="den">2</span></span>x<sup>2</sup>';
+        }
+        if (a === -1.5) {
+          return 'y = &minus;<span class="math-frac"><span class="num">3</span><span class="den">2</span></span>x<sup>2</sup>';
+        }
+        const sign = a < 0 ? '&minus;' : '';
+        return `y = ${sign}${Math.abs(a)}x<sup>2</sup>`;
+      }
+
+      // ==========================================
+      // 3. 座標系・Canvasスケーリング計算
+      // ==========================================
+
+      /**
+       * 現在のグラフが見やすく収まる座標範囲（xSpan, ySpan）を返す
+       */
+      function getViewBounds() {
+        const range = computeRange();
+        const maxAbsY = Math.max(Math.abs(range.yMin), Math.abs(range.yMax));
+
+        // 基本は y: -10〜10。値が大きいときだけ自動で広げる
+        let ySpan = 10;
+        let yStep = 2;
+        if (maxAbsY > 18) {
+          ySpan = 36;
+          yStep = 6;
+        } else if (maxAbsY > 9.2) {
+          ySpan = 20;
+          yStep = 4;
+        }
+
+        return {
+          xMinView: -5,
+          xMaxView: 5,
+          yMinView: -ySpan,
+          yMaxView: ySpan,
+          xStep: 1,
+          yStep,
+        };
+      }
+
+      /**
+       * 数学座標 (x, y) <-> Canvasピクセル座標 (px, py) の変換器を生成
+       */
+      function getTransform() {
+        const rect = canvasWrapper.getBoundingClientRect();
+        const width = rect.width;
+        const height = rect.height;
+        const pad = { top: 28, right: 28, bottom: 28, left: 36 };
+        const plotW = Math.max(10, width - pad.left - pad.right);
+        const plotH = Math.max(10, height - pad.top - pad.bottom);
+        const bounds = getViewBounds();
+
+        const toPxX = (x) =>
+          pad.left + ((x - bounds.xMinView) / (bounds.xMaxView - bounds.xMinView)) * plotW;
+        const toPxY = (y) =>
+          pad.top + ((bounds.yMaxView - y) / (bounds.yMaxView - bounds.yMinView)) * plotH;
+        const toMathX = (px) =>
+          bounds.xMinView + ((px - pad.left) / plotW) * (bounds.xMaxView - bounds.xMinView);
+
+        return { width, height, pad, plotW, plotH, bounds, toPxX, toPxY, toMathX };
+      }
+
+      // ==========================================
+      // 4. Canvas描画ロジック
+      // ==========================================
+
+      /**
+       * 角丸の吹き出し・ラベルバッジを描画するヘルパー
+       */
+      function drawLabelPill(text, cx, cy, bgColor, textColor, borderColor = null, fontSize = 12) {
+        ctx.save();
+        ctx.font = `700 ${fontSize}px "Inter", "Noto Sans JP", sans-serif`;
+        const metrics = ctx.measureText(text);
+        const padX = 8;
+        const boxW = metrics.width + padX * 2;
+        const boxH = fontSize + 10;
+        const x = cx - boxW / 2;
+        const y = cy - boxH / 2;
+        const r = 7;
+
+        ctx.beginPath();
+        ctx.roundRect(x, y, boxW, boxH, r);
+        ctx.fillStyle = bgColor;
+        ctx.fill();
+        if (borderColor) {
+          ctx.strokeStyle = borderColor;
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+        }
+
+        ctx.fillStyle = textColor;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(text, cx, cy + 0.5);
+        ctx.restore();
+      }
+
+      /**
+       * メイン描画関数
+       */
+      function drawGraph() {
+        try {
+          const dpr = window.devicePixelRatio || 1;
+          const tr = getTransform();
+          const { width, height, pad, plotW, plotH, bounds, toPxX, toPxY } = tr;
+
+          // 高解像度ディスプレイ対応
+          if (canvas.width !== Math.round(width * dpr) || canvas.height !== Math.round(height * dpr)) {
+            canvas.width = Math.round(width * dpr);
+            canvas.height = Math.round(height * dpr);
+          }
+
+          ctx.save();
+          ctx.scale(dpr, dpr);
+          ctx.clearRect(0, 0, width, height);
+
+          const { a, xMin, xMax, quizMode } = state;
+          const range = computeRange();
+          const originX = toPxX(0);
+          const originY = toPxY(0);
+
+          // ------------------------------------------
+          // A. グリッド線
+          // ------------------------------------------
+          ctx.lineWidth = 1;
+          ctx.strokeStyle = '#F1F5F9';
+
+          // 縦グリッド（0.5刻みの薄い線 & 1刻みの線）
+          for (let x = bounds.xMinView; x <= bounds.xMaxView; x += 1) {
+            const px = toPxX(x);
+            ctx.beginPath();
+            ctx.strokeStyle = x === 0 ? '#CBD5E1' : '#E2E8F0';
+            ctx.moveTo(px, pad.top);
+            ctx.lineTo(px, height - pad.bottom);
+            ctx.stroke();
+          }
+
+          // 横グリッド
+          for (let y = bounds.yMinView; y <= bounds.yMaxView; y += bounds.yStep) {
+            const py = toPxY(y);
+            ctx.beginPath();
+            ctx.strokeStyle = y === 0 ? '#CBD5E1' : '#E2E8F0';
+            ctx.moveTo(pad.left, py);
+            ctx.lineTo(width - pad.right, py);
+            ctx.stroke();
+          }
+
+          // ------------------------------------------
+          // B. 定義域（xの変域）の縦方向の青い帯
+          // ------------------------------------------
+          const pxXMin = toPxX(xMin);
+          const pxXMax = toPxX(xMax);
+
+          ctx.fillStyle = 'rgba(59, 130, 246, 0.10)';
+          ctx.fillRect(pxXMin, pad.top, Math.max(2, pxXMax - pxXMin), plotH);
+
+          // 定義域の左右境界の青い点線
+          ctx.save();
+          ctx.strokeStyle = 'rgba(37, 99, 235, 0.45)';
+          ctx.lineWidth = 1.5;
+          ctx.setLineDash([5, 4]);
+          [pxXMin, pxXMax].forEach((px) => {
+            ctx.beginPath();
+            ctx.moveTo(px, pad.top);
+            ctx.lineTo(px, height - pad.bottom);
+            ctx.stroke();
+          });
+          ctx.restore();
+
+          // ------------------------------------------
+          // C. 値域（yの変域）の横方向のオレンジ投影帯（クイズモード時は非表示）
+          // ------------------------------------------
+          const pxYMax = toPxY(range.yMax); // 画面上は上側
+          const pxYMin = toPxY(range.yMin); // 画面上は下側
+
+          if (!quizMode) {
+            ctx.fillStyle = 'rgba(249, 115, 22, 0.13)';
+            ctx.fillRect(pad.left, pxYMax, plotW, Math.max(2, pxYMin - pxYMax));
+
+            // 値域の上下境界のオレンジ点線（有効グラフからy軸への投影を強調）
+            ctx.save();
+            ctx.strokeStyle = 'rgba(234, 88, 12, 0.55)';
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([5, 4]);
+            [pxYMax, pxYMin].forEach((py) => {
+              ctx.beginPath();
+              ctx.moveTo(pad.left, py);
+              ctx.lineTo(width - pad.right, py);
+              ctx.stroke();
+            });
+            ctx.restore();
+          }
+
+          // ------------------------------------------
+          // D. 座標軸（x軸・y軸）と目盛り・矢印
+          // ------------------------------------------
+          ctx.strokeStyle = '#334155';
+          ctx.lineWidth = 2;
+
+          // x軸
+          ctx.beginPath();
+          ctx.moveTo(pad.left - 4, originY);
+          ctx.lineTo(width - pad.right + 10, originY);
+          ctx.stroke();
+          // x軸矢印
+          ctx.beginPath();
+          ctx.moveTo(width - pad.right + 10, originY);
+          ctx.lineTo(width - pad.right + 3, originY - 4);
+          ctx.lineTo(width - pad.right + 3, originY + 4);
+          ctx.closePath();
+          ctx.fillStyle = '#334155';
+          ctx.fill();
+
+          // y軸
+          ctx.beginPath();
+          ctx.moveTo(originX, height - pad.bottom + 4);
+          ctx.lineTo(originX, pad.top - 10);
+          ctx.stroke();
+          // y軸矢印
+          ctx.beginPath();
+          ctx.moveTo(originX, pad.top - 10);
+          ctx.lineTo(originX - 4, pad.top - 3);
+          ctx.lineTo(originX + 4, pad.top - 3);
+          ctx.closePath();
+          ctx.fill();
+
+          // 軸ラベル（x, y, O）
+          ctx.fillStyle = '#1E293B';
+          ctx.font = 'italic 700 15px "Inter", sans-serif';
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('x', width - pad.right + 14, originY);
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'bottom';
+          ctx.fillText('y', originX, pad.top - 13);
+
+          // 原点 O
+          ctx.font = '600 12px "Inter", sans-serif';
+          ctx.fillStyle = '#64748B';
+          ctx.textAlign = 'right';
+          ctx.textBaseline = 'top';
+          ctx.fillText('O', originX - 6, originY + 5);
+
+          // 目盛り数字
+          ctx.font = '600 11px "Inter", sans-serif';
+          ctx.fillStyle = '#64748B';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'top';
+          for (let x = bounds.xMinView; x <= bounds.xMaxView; x += 1) {
+            if (x === 0) continue;
+            ctx.fillText(String(x), toPxX(x), originY + 7);
+          }
+
+          ctx.textAlign = 'right';
+          ctx.textBaseline = 'middle';
+          for (let y = bounds.yMinView; y <= bounds.yMaxView; y += bounds.yStep) {
+            if (y === 0) continue;
+            ctx.fillText(String(y), originX - 7, toPxY(y));
+          }
+
+          // ------------------------------------------
+          // E. 範囲外の放物線（薄いグレー破線）
+          // ------------------------------------------
+          ctx.save();
+          ctx.beginPath();
+          ctx.rect(pad.left, pad.top, plotW, plotH);
+          ctx.clip();
+
+          ctx.beginPath();
+          ctx.strokeStyle = '#94A3B8';
+          ctx.lineWidth = 2;
+          ctx.setLineDash([6, 5]);
+          const samples = 240;
+          for (let i = 0; i <= samples; i++) {
+            const x = bounds.xMinView + ((bounds.xMaxView - bounds.xMinView) * i) / samples;
+            const y = calcY(a, x);
+            const px = toPxX(x);
+            const py = toPxY(y);
+            if (i === 0) ctx.moveTo(px, py);
+            else ctx.lineTo(px, py);
+          }
+          ctx.stroke();
+          ctx.setLineDash([]);
+
+          // ------------------------------------------
+          // F. 有効区間の放物線（太く鮮やかに強調）
+          // ------------------------------------------
+          ctx.beginPath();
+          ctx.strokeStyle = '#4F46E5'; // 鮮やかなインディゴ
+          ctx.lineWidth = 4.5;
+          ctx.lineCap = 'round';
+          const activeSamples = 160;
+          for (let i = 0; i <= activeSamples; i++) {
+            const x = xMin + ((xMax - xMin) * i) / activeSamples;
+            const y = calcY(a, x);
+            const px = toPxX(x);
+            const py = toPxY(y);
+            if (i === 0) ctx.moveTo(px, py);
+            else ctx.lineTo(px, py);
+          }
+          ctx.stroke();
+          ctx.restore(); // クリップ解除
+
+          // ------------------------------------------
+          // G. x軸上の定義域バー（太い青バー＋ドラッグハンドル）
+          // ------------------------------------------
+          ctx.strokeStyle = '#2563EB';
+          ctx.lineWidth = 7;
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.moveTo(pxXMin, originY);
+          ctx.lineTo(pxXMax, originY);
+          ctx.stroke();
+
+          // x軸上の両端ハンドル（青い丸）
+          [pxXMin, pxXMax].forEach((px) => {
+            ctx.beginPath();
+            ctx.arc(px, originY, 7, 0, Math.PI * 2);
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fill();
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = '#2563EB';
+            ctx.stroke();
+          });
+
+          // ------------------------------------------
+          // H. y軸上の値域バー（太いオレンジバー・クイズ時は非表示）
+          // ------------------------------------------
+          if (!quizMode) {
+            ctx.strokeStyle = '#EA580C';
+            ctx.lineWidth = 7;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(originX, pxYMin);
+            ctx.lineTo(originX, pxYMax);
+            ctx.stroke();
+
+            // y軸上の両端ドット（オレンジの丸）
+            [pxYMin, pxYMax].forEach((py) => {
+              ctx.beginPath();
+              ctx.arc(originX, py, 6, 0, Math.PI * 2);
+              ctx.fillStyle = '#FFFFFF';
+              ctx.fill();
+              ctx.lineWidth = 3;
+              ctx.strokeStyle = '#EA580C';
+              ctx.stroke();
+            });
+          }
+
+          // ------------------------------------------
+          // I. 放物線両端の点と座標ラベル
+          // ------------------------------------------
+          const endpoints = [
+            { x: xMin, y: range.yLeft, side: 'left' },
+            { x: xMax, y: range.yRight, side: 'right' },
+          ];
+
+          endpoints.forEach((pt, idx) => {
+            // 1点のみのときは重複描画しない
+            if (idx === 1 && range.isSinglePoint) return;
+
+            const px = toPxX(pt.x);
+            const py = toPxY(pt.y);
+
+            // 点の描画
+            ctx.beginPath();
+            ctx.arc(px, py, 6.5, 0, Math.PI * 2);
+            ctx.fillStyle = '#4F46E5';
+            ctx.fill();
+            ctx.lineWidth = 2.5;
+            ctx.strokeStyle = '#FFFFFF';
+            ctx.stroke();
+
+            // 座標ラベル（クイズ時はy座標を「?」にする）
+            const yText = quizMode ? '?' : fmt(pt.y);
+            const label = `(${fmt(pt.x)}, ${yText})`;
+            // 画面端からはみ出さないようにオフセット調整
+            let lx = pt.side === 'left' ? px - 42 : px + 42;
+            let ly = a > 0 ? py - 20 : py + 22;
+            lx = Math.max(pad.left + 38, Math.min(width - pad.right - 38, lx));
+            ly = Math.max(pad.top + 14, Math.min(height - pad.bottom - 14, ly));
+
+            drawLabelPill(label, lx, ly, 'rgba(255,255,255,0.95)', '#312E81', '#C7D2FE', 11.5);
+          });
+
+          // ------------------------------------------
+          // J. 重要ポイントの可視化：x = 0 を含む場合の頂点マーカー＆吹き出し
+          // ------------------------------------------
+          if (range.includesZero && !quizMode && !range.isSinglePoint) {
+            // 原点に目立つリング＆マーカー
+            ctx.beginPath();
+            ctx.arc(originX, originY, 12, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(239, 68, 68, 0.18)';
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.arc(originX, originY, 6.5, 0, Math.PI * 2);
+            ctx.fillStyle = '#EF4444';
+            ctx.fill();
+            ctx.lineWidth = 2.5;
+            ctx.strokeStyle = '#FFFFFF';
+            ctx.stroke();
+
+            // 吹き出し（a>0 なら下側、a<0 なら上側に配置して放物線と被らないように）
+            const calloutText = a > 0 ? '★ ここが最小！(y = 0)' : '★ ここが最大！(y = 0)';
+            const calloutY = a > 0 ? originY + 34 : originY - 34;
+
+            // 吹き出しの尻尾（三角形）
+            ctx.beginPath();
+            ctx.fillStyle = '#DC2626';
+            if (a > 0) {
+              ctx.moveTo(originX, originY + 12);
+              ctx.lineTo(originX - 6, calloutY - 11);
+              ctx.lineTo(originX + 6, calloutY - 11);
+            } else {
+              ctx.moveTo(originX, originY - 12);
+              ctx.lineTo(originX - 6, calloutY + 11);
+              ctx.lineTo(originX + 6, calloutY + 11);
+            }
+            ctx.closePath();
+            ctx.fill();
+
+            drawLabelPill(calloutText, originX, calloutY, '#DC2626', '#FFFFFF', '#991B1B', 12);
+          }
+
+          // ------------------------------------------
+          // K. アニメーション中の点P と x軸・y軸上の影
+          // ------------------------------------------
+          if (state.anim.active) {
+            const pX = state.anim.currentX;
+            const pY = calcY(a, pX);
+            const pxP = toPxX(pX);
+            const pyP = toPxY(pY);
+
+            // 点Pからx軸（青）へのガイド線
+            ctx.save();
+            ctx.strokeStyle = '#2563EB';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([4, 3]);
+            ctx.beginPath();
+            ctx.moveTo(pxP, pyP);
+            ctx.lineTo(pxP, originY);
+            ctx.stroke();
+
+            // 点Pからy軸（オレンジ）へのガイド線
+            ctx.strokeStyle = '#EA580C';
+            ctx.beginPath();
+            ctx.moveTo(pxP, pyP);
+            ctx.lineTo(originX, pyP);
+            ctx.stroke();
+            ctx.restore();
+
+            // x軸上の影（青い点）
+            ctx.beginPath();
+            ctx.arc(pxP, originY, 8.5, 0, Math.PI * 2);
+            ctx.fillStyle = '#2563EB';
+            ctx.fill();
+            ctx.lineWidth = 2.5;
+            ctx.strokeStyle = '#FFFFFF';
+            ctx.stroke();
+
+            // y軸上の影（オレンジの点）
+            ctx.beginPath();
+            ctx.arc(originX, pyP, 8.5, 0, Math.PI * 2);
+            ctx.fillStyle = '#EA580C';
+            ctx.fill();
+            ctx.lineWidth = 2.5;
+            ctx.strokeStyle = '#FFFFFF';
+            ctx.stroke();
+
+            // 放物線上の点P本体（鮮やかなエメラルド）
+            ctx.beginPath();
+            ctx.arc(pxP, pyP, 13, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(16, 185, 129, 0.25)';
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.arc(pxP, pyP, 7.5, 0, Math.PI * 2);
+            ctx.fillStyle = '#10B981';
+            ctx.fill();
+            ctx.lineWidth = 2.5;
+            ctx.strokeStyle = '#FFFFFF';
+            ctx.stroke();
+
+            // 左上の座標バッジ更新
+            const yStr = quizMode ? '?' : fmt(pY);
+            pointPText.textContent = `点P (x = ${fmt(pX)},  y = ${yStr})`;
+          }
+
+          ctx.restore();
+        } catch (err) {
+          console.error('グラフ描画中にエラーが発生しました:', err);
+        }
+      }
+
+      // ==========================================
+      // 5. UI・数式・解説の同期更新
+      // ==========================================
+
+      /**
+       * 現在の状態に合わせて解説メッセージを自動生成
+       */
+      function updateExplanation(range) {
+        const { a, xMin, xMax, quizMode } = state;
+
+        // クイズモード中は答えをネタバレしないヒントを表示
+        if (quizMode) {
+          explanationBox.className = 'rounded-2xl border-2 p-4 shadow-sm transition-colors bg-indigo-50 border-indigo-200';
+          explanationIcon.className = 'w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-lg bg-indigo-100 text-indigo-700';
+          explanationIcon.textContent = '🤔';
+          explanationTitle.className = 'text-sm sm:text-base font-extrabold text-indigo-900 mb-1';
+          explanationTitle.textContent = '考えてみよう！（クイズモード）';
+          explanationText.className = 'text-xs sm:text-sm leading-relaxed text-indigo-950/90 font-medium';
+          explanationText.innerHTML =
+            `グラフの<strong>いちばん低い場所</strong>と<strong>いちばん高い場所</strong>はどこかな？<br>` +
+            `特に、xの範囲（${fmt(xMin)} ≦ x ≦ ${fmt(xMax)}）の中に <strong>「0」が入っているかどうか</strong> に注目してみよう！`;
+          return;
+        }
+
+        // 1点のみの場合
+        if (range.isSinglePoint) {
+          explanationBox.className = 'rounded-2xl border-2 p-4 shadow-sm transition-colors bg-slate-100 border-slate-300';
+          explanationIcon.className = 'w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-lg bg-white text-slate-700';
+          explanationIcon.textContent = '📍';
+          explanationTitle.className = 'text-sm sm:text-base font-extrabold text-slate-900 mb-1';
+          explanationTitle.textContent = 'xが1つの値だけのとき';
+          explanationText.className = 'text-xs sm:text-sm leading-relaxed text-slate-700 font-medium';
+          explanationText.innerHTML =
+            `x = ${fmt(xMin)} の1点だけなので、yの値も <strong>${fmt(range.yMin)}</strong> の1つだけになります。`;
+          return;
+        }
+
+        // パターン1：xの範囲が 0 をまたぐ（最重要のひっかけパターン）
+        if (range.strictlyCrossesZero) {
+          explanationBox.className = 'rounded-2xl border-2 p-4 shadow-sm transition-colors bg-rose-50 border-rose-200';
+          explanationIcon.className = 'w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-lg bg-rose-100 text-rose-600';
+          explanationIcon.textContent = '⚠️';
+          explanationTitle.className = 'text-sm sm:text-base font-extrabold text-rose-900 mb-1';
+          explanationText.className = 'text-xs sm:text-sm leading-relaxed text-rose-950/90 font-medium';
+
+          const symNote = range.isSymmetric
+            ? `<br>しかも左右対称なので、両端のyの値はどちらも <strong>${fmt(a > 0 ? range.yMax : range.yMin)}</strong> で同じになります！`
+            : '';
+
+          if (a > 0) {
+            explanationTitle.textContent = '注意！xの範囲に「0」が入っています（上向き）';
+            explanationText.innerHTML =
+              `グラフは途中で一度 <strong>原点 (0, 0)</strong> まで下がってから上がります。だから両端の値（${fmt(range.yLeft)} と ${fmt(range.yRight)}）だけを見てはいけません！<br>` +
+              `yの最小値は <strong>0</strong>、最大値は <strong>${fmt(range.yMax)}</strong> になります。${symNote}`;
+          } else {
+            explanationTitle.textContent = '注意！xの範囲に「0」が入っています（下向き）';
+            explanationText.innerHTML =
+              `グラフは途中で一度 <strong>原点 (0, 0)</strong> まで上がってから下がります。だから両端の値（${fmt(range.yLeft)} と ${fmt(range.yRight)}）だけを見てはいけません！<br>` +
+              `yの最大値は <strong>0</strong>、最小値は <strong>${fmt(range.yMin)}</strong> になります。${symNote}`;
+          }
+          return;
+        }
+
+        // パターン2：片方の端がちょうど 0 の場合
+        if (range.includesZero) {
+          explanationBox.className = 'rounded-2xl border-2 p-4 shadow-sm transition-colors bg-amber-50 border-amber-200';
+          explanationIcon.className = 'w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-lg bg-amber-100 text-amber-700';
+          explanationIcon.textContent = '💡';
+          explanationTitle.className = 'text-sm sm:text-base font-extrabold text-amber-900 mb-1';
+          explanationTitle.textContent = '片方の端がちょうど原点 (0, 0) です';
+          explanationText.className = 'text-xs sm:text-sm leading-relaxed text-amber-950/90 font-medium';
+          if (a > 0) {
+            explanationText.innerHTML =
+              `x = 0 のときに y = 0 が最小値になり、もう片方の端で最大値 <strong>${fmt(range.yMax)}</strong> になります。`;
+          } else {
+            explanationText.innerHTML =
+              `x = 0 のときに y = 0 が最大値になり、もう片方の端で最小値 <strong>${fmt(range.yMin)}</strong> になります。`;
+          }
+          return;
+        }
+
+        // パターン3：xの範囲に 0 が入っていない（基本パターン）
+        explanationBox.className = 'rounded-2xl border-2 p-4 shadow-sm transition-colors bg-emerald-50 border-emerald-200';
+        explanationIcon.className = 'w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-lg bg-emerald-100 text-emerald-700';
+        explanationIcon.textContent = '✅';
+        explanationTitle.className = 'text-sm sm:text-base font-extrabold text-emerald-900 mb-1';
+        explanationTitle.textContent = '基本パターン（xの範囲に 0 が入っていない）';
+        explanationText.className = 'text-xs sm:text-sm leading-relaxed text-emerald-950/90 font-medium';
+        explanationText.innerHTML =
+          `xの範囲に <strong>0 が入っていない</strong> ので、グラフは途中で折り返しません。<br>` +
+          `両端のyの値（<strong>${fmt(range.yLeft)}</strong> と <strong>${fmt(range.yRight)}</strong>）を比べて、小さい方を左、大きい方を右に書けばOKです！`;
+      }
+
+      /**
+       * すべてのUI表示とCanvasを再描画
+       */
+      function updateAll() {
+        const range = computeRange();
+
+        // 関数式と変域の表示更新
+        equationDisplay.innerHTML = formatEquationHTML(state.a);
+        domainDisplay.textContent = `${fmt(state.xMin)} ≦ x ≦ ${fmt(state.xMax)}`;
+
+        if (state.quizMode) {
+          rangeDisplay.textContent = '？ ≦ y ≦ ？';
+          rangeCard.classList.remove('bg-orange-50/80', 'border-orange-200');
+          rangeCard.classList.add('bg-amber-50', 'border-amber-300');
+          quizBadge.classList.remove('hidden');
+          revealAnswerBtn.classList.remove('hidden');
+        } else {
+          rangeDisplay.textContent = `${fmt(range.yMin)} ≦ y ≦ ${fmt(range.yMax)}`;
+          rangeCard.classList.add('bg-orange-50/80', 'border-orange-200');
+          rangeCard.classList.remove('bg-amber-50', 'border-amber-300');
+          quizBadge.classList.add('hidden');
+          revealAnswerBtn.classList.add('hidden');
+        }
+
+        // スライダーとラベルの同期
+        const aIdx = A_VALUES.indexOf(state.a);
+        if (aIdx !== -1) sliderA.value = String(aIdx);
+        valALabel.textContent = `a = ${fmt(state.a)}`;
+
+        sliderXMin.value = String(state.xMin);
+        sliderXMax.value = String(state.xMax);
+        valXMinLabel.textContent = fmt(state.xMin);
+        valXMaxLabel.textContent = fmt(state.xMax);
+
+        // クイックaボタンのアクティブ表示
+        document.querySelectorAll('.quick-a-btn').forEach((btn) => {
+          const val = parseFloat(btn.dataset.a);
+          if (Math.abs(val - state.a) < 1e-9) {
+            btn.classList.add('bg-indigo-600', 'text-white', 'border-indigo-600');
+            btn.classList.remove('bg-white', 'text-slate-700', 'border-slate-200');
+          } else {
+            btn.classList.remove('bg-indigo-600', 'text-white', 'border-indigo-600');
+            btn.classList.add('bg-white', 'text-slate-700', 'border-slate-200');
+          }
+        });
+
+        // クイズトグルスイッチの見た目同期
+        quizToggleBtn.setAttribute('aria-checked', String(state.quizMode));
+        if (state.quizMode) {
+          quizToggleBtn.classList.remove('bg-slate-300');
+          quizToggleBtn.classList.add('bg-amber-500');
+          quizToggleKnob.classList.remove('translate-x-0');
+          quizToggleKnob.classList.add('translate-x-5');
+        } else {
+          quizToggleBtn.classList.add('bg-slate-300');
+          quizToggleBtn.classList.remove('bg-amber-500');
+          quizToggleKnob.classList.add('translate-x-0');
+          quizToggleKnob.classList.remove('translate-x-5');
+        }
+
+        // 解説ボックス更新
+        updateExplanation(range);
+
+        // グラフ再描画
+        drawGraph();
+      }
+
+      // ==========================================
+      // 6. 点Pのアニメーション制御
+      // ==========================================
+
+      function stopAnimation(hidePoint = true) {
+        if (state.anim.rafId) {
+          cancelAnimationFrame(state.anim.rafId);
+          state.anim.rafId = null;
+        }
+        state.anim.running = false;
+        if (hidePoint) {
+          state.anim.active = false;
+          state.anim.progress = 0;
+          pointPBadge.classList.add('hidden');
+          stopAnimateBtn.classList.add('hidden');
+        }
+        animateBtnText.textContent = '点Pを動かして確認';
+        drawGraph();
+      }
+
+      function startAnimation() {
+        // すでに動いている場合は一時停止
+        if (state.anim.running) {
+          stopAnimation(false);
+          animateBtnText.textContent = '続きから動かす';
+          return;
+        }
+
+        // 完了していたら最初から
+        if (!state.anim.active || state.anim.progress >= 1) {
+          state.anim.progress = 0;
+        }
+
+        state.anim.active = true;
+        state.anim.running = true;
+        state.anim.lastTime = performance.now();
+        pointPBadge.classList.remove('hidden');
+        stopAnimateBtn.classList.remove('hidden');
+        animateBtnText.textContent = '一時停止';
+
+        const durationMs = 3400; // ゆっくり観察しやすい3.4秒
+
+        function step(now) {
+          if (!state.anim.running) return;
+          const dt = now - state.anim.lastTime;
+          state.anim.lastTime = now;
+
+          state.anim.progress = Math.min(1, state.anim.progress + dt / durationMs);
+          state.anim.currentX = state.xMin + (state.xMax - state.xMin) * state.anim.progress;
+
+          drawGraph();
+
+          if (state.anim.progress < 1) {
+            state.anim.rafId = requestAnimationFrame(step);
+          } else {
+            // 右端に到達して完了
+            state.anim.running = false;
+            state.anim.rafId = null;
+            animateBtnText.textContent = 'もう一回動かす';
+          }
+        }
+
+        state.anim.rafId = requestAnimationFrame(step);
+      }
+
+      // ==========================================
+      // 7. イベントリスナー（操作パネル・プリセット・ドラッグ）
+      // ==========================================
+
+      // 係数 a スライダー
+      sliderA.addEventListener('input', () => {
+        const idx = parseInt(sliderA.value, 10);
+        state.a = A_VALUES[idx];
+        if (state.anim.active) stopAnimation(true);
+        updateAll();
+      });
+
+      // 係数 a クイックボタン
+      document.querySelectorAll('.quick-a-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          state.a = parseFloat(btn.dataset.a);
+          if (state.anim.active) stopAnimation(true);
+          updateAll();
+        });
+      });
+
+      // 定義域 xMin スライダー
+      sliderXMin.addEventListener('input', () => {
+        const val = parseFloat(sliderXMin.value);
+        state.xMin = val;
+        if (state.xMin > state.xMax) state.xMax = state.xMin;
+        if (state.anim.active) stopAnimation(true);
+        updateAll();
+      });
+
+      // 定義域 xMax スライダー
+      sliderXMax.addEventListener('input', () => {
+        const val = parseFloat(sliderXMax.value);
+        state.xMax = val;
+        if (state.xMax < state.xMin) state.xMin = state.xMax;
+        if (state.anim.active) stopAnimation(true);
+        updateAll();
+      });
+
+      // 授業用プリセットボタン
+      const PRESETS = {
+        basic: { a: 1, xMin: 1, xMax: 3 },
+        'trap-up': { a: 1, xMin: -2, xMax: 3 },
+        'trap-down': { a: -1, xMin: -3, xMax: 2 },
+        symmetric: { a: 0.5, xMin: -2, xMax: 2 },
+      };
+
+      document.querySelectorAll('.preset-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const p = PRESETS[btn.dataset.preset];
+          if (!p) return;
+          state.a = p.a;
+          state.xMin = p.xMin;
+          state.xMax = p.xMax;
+          if (state.anim.active) stopAnimation(true);
+          updateAll();
+        });
+      });
+
+      // クイズモードトグル & 答え合わせボタン
+      quizToggleBtn.addEventListener('click', () => {
+        state.quizMode = !state.quizMode;
+        updateAll();
+      });
+
+      revealAnswerBtn.addEventListener('click', () => {
+        state.quizMode = false;
+        updateAll();
+      });
+
+      // アニメーションボタン
+      animateBtn.addEventListener('click', startAnimation);
+      stopAnimateBtn.addEventListener('click', () => stopAnimation(true));
+
+      // ------------------------------------------
+      // Canvas上での定義域ハンドル直接ドラッグ（マウス＆タッチ対応）
+      // ------------------------------------------
+      function getPointerPos(e) {
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return { x: clientX - rect.left, y: clientY - rect.top };
+      }
+
+      function handlePointerDown(e) {
+        const pos = getPointerPos(e);
+        const tr = getTransform();
+        const originY = tr.toPxY(0);
+        const pxMin = tr.toPxX(state.xMin);
+        const pxMax = tr.toPxX(state.xMax);
+
+        // x軸上のハンドル付近（半径28px以内）をタップ/クリックしたらドラッグ開始
+        if (Math.abs(pos.y - originY) <= 32) {
+          const distMin = Math.abs(pos.x - pxMin);
+          const distMax = Math.abs(pos.x - pxMax);
+          if (distMin <= 28 || distMax <= 28) {
+            state.dragTarget = distMin <= distMax ? 'min' : 'max';
+            if (state.anim.active) stopAnimation(true);
+            canvas.style.cursor = 'grabbing';
+            if (e.cancelable) e.preventDefault();
+          }
+        }
+      }
+
+      function handlePointerMove(e) {
+        const pos = getPointerPos(e);
+        const tr = getTransform();
+
+        if (!state.dragTarget) {
+          // ホバー時のカーソル変更
+          const originY = tr.toPxY(0);
+          const nearHandle =
+            Math.abs(pos.y - originY) <= 24 &&
+            (Math.abs(pos.x - tr.toPxX(state.xMin)) <= 22 ||
+              Math.abs(pos.x - tr.toPxX(state.xMax)) <= 22);
+          canvas.style.cursor = nearHandle ? 'grab' : 'default';
+          return;
+        }
+
+        if (e.cancelable) e.preventDefault();
+
+        // 0.5刻みにスナップし、-4〜4 の範囲に制限
+        let mathX = tr.toMathX(pos.x);
+        mathX = Math.round(mathX * 2) / 2;
+        mathX = Math.max(-4, Math.min(4, mathX));
+
+        if (state.dragTarget === 'min') {
+          state.xMin = mathX;
+          if (state.xMin > state.xMax) state.xMax = state.xMin;
+        } else {
+          state.xMax = mathX;
+          if (state.xMax < state.xMin) state.xMin = state.xMax;
+        }
+        updateAll();
+      }
+
+      function handlePointerUp() {
+        if (state.dragTarget) {
+          state.dragTarget = null;
+          canvas.style.cursor = 'default';
+        }
+      }
+
+      canvas.addEventListener('mousedown', handlePointerDown);
+      window.addEventListener('mousemove', handlePointerMove);
+      window.addEventListener('mouseup', handlePointerUp);
+
+      canvas.addEventListener('touchstart', handlePointerDown, { passive: false });
+      window.addEventListener('touchmove', handlePointerMove, { passive: false });
+      window.addEventListener('touchend', handlePointerUp);
+
+      // 画面リサイズ時にCanvasを再描画
+      const resizeObserver = new ResizeObserver(() => {
+        drawGraph();
+      });
+      resizeObserver.observe(canvasWrapper);
+
+      // 初回レンダリング
+      window.addEventListener('load', () => {
+        updateAll();
+      });
+      updateAll();
+    })();
+  </script>
+</body>
+</html>
