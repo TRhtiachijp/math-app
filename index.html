@@ -26,30 +26,47 @@
     <div class="flex items-center gap-2">
       <span class="text-2xl">📐</span>
       <div>
-        <h1 class="text-lg md:text-xl font-bold leading-tight">中学数学 総合マスター Lab</h1>
+        <div class="flex items-center gap-2">
+          <h1 class="text-lg md:text-xl font-bold leading-tight">中学数学 総合マスター Lab</h1>
+          <span class="text-[10px] bg-indigo-500/80 px-2 py-0.5 rounded font-mono">v3.0</span>
+        </div>
         <p class="text-xs text-indigo-200">中3 定期テスト対策・インタラクティブ学習ボード</p>
       </div>
     </div>
-    <button onclick="openApiModal()" id="apiStatusBtn" class="text-xs bg-indigo-800 hover:bg-indigo-900 border border-indigo-500 px-3 py-1.5 rounded-full flex items-center gap-1.5 transition">
-      <span id="apiStatusDot" class="w-2 h-2 rounded-full bg-amber-400"></span>
-      <span id="apiStatusText">Gemini API未設定</span>
-    </button>
+    <div class="flex items-center gap-2">
+      <button onclick="checkRemoteUpdate(true)" title="最新版の有無を確認" class="text-xs bg-indigo-800 hover:bg-indigo-900 border border-indigo-500 px-2.5 py-1.5 rounded-full transition">
+        🔄 更新確認
+      </button>
+      <button onclick="openApiModal()" id="apiStatusBtn" class="text-xs bg-indigo-800 hover:bg-indigo-900 border border-indigo-500 px-3 py-1.5 rounded-full flex items-center gap-1.5 transition">
+        <span id="apiStatusDot" class="w-2 h-2 rounded-full bg-amber-400"></span>
+        <span id="apiStatusText">API・自動更新設定</span>
+      </button>
+    </div>
   </header>
+
+  <!-- 更新通知バナー -->
+  <div id="updateBanner" class="hidden bg-emerald-600 text-white px-4 py-2 text-xs font-bold flex justify-between items-center">
+    <span>✨ 新しい問題・機能が更新されました！最新の画面に切り替えます...</span>
+    <button onclick="location.reload(true)" class="bg-white text-emerald-700 px-3 py-1 rounded font-bold">今すぐ再読み込み</button>
+  </div>
 
   <!-- ナビゲーションタブ -->
   <nav class="bg-white border-b border-slate-200 px-3 py-2 flex gap-2 overflow-x-auto sticky top-0 z-10 shadow-sm">
-    <button onclick="switchTab('funcs', this)" class="tab-btn px-4 py-2 rounded-lg font-bold text-sm whitespace-nowrap bg-indigo-600 text-white shadow-sm transition">
+    <button onclick="switchTab('funcs', this)" class="tab-btn px-3.5 py-2 rounded-lg font-bold text-sm whitespace-nowrap bg-indigo-600 text-white shadow-sm transition">
       📈 2次関数・動点
     </button>
-    <button onclick="switchTab('geome', this)" class="tab-btn px-4 py-2 rounded-lg font-bold text-sm whitespace-nowrap text-slate-600 hover:bg-slate-100 transition">
+    <button onclick="switchTab('parabolaArea', this)" class="tab-btn px-3.5 py-2 rounded-lg font-bold text-sm whitespace-nowrap text-slate-600 hover:bg-slate-100 transition">
+      📐 放物線と面積（苦手克服）
+    </button>
+    <button onclick="switchTab('geome', this)" class="tab-btn px-3.5 py-2 rounded-lg font-bold text-sm whitespace-nowrap text-slate-600 hover:bg-slate-100 transition">
       ⭕ 円周角の定理
     </button>
-    <button onclick="switchTab('notes', this)" class="tab-btn px-4 py-2 rounded-lg font-bold text-sm whitespace-nowrap text-slate-600 hover:bg-slate-100 transition flex items-center gap-1.5">
-      <span>📝 学習メモボード</span>
+    <button onclick="switchTab('notes', this)" class="tab-btn px-3.5 py-2 rounded-lg font-bold text-sm whitespace-nowrap text-slate-600 hover:bg-slate-100 transition flex items-center gap-1.5">
+      <span>📝 学習メモ</span>
       <span id="unresolvedBadge" class="hidden bg-rose-500 text-white text-xs px-1.5 py-0.5 rounded-full">0</span>
     </button>
-    <button onclick="switchTab('ai', this)" class="tab-btn px-4 py-2 rounded-lg font-bold text-sm whitespace-nowrap text-slate-600 hover:bg-slate-100 transition">
-      🤖 AIチューター・類題
+    <button onclick="switchTab('ai', this)" class="tab-btn px-3.5 py-2 rounded-lg font-bold text-sm whitespace-nowrap text-slate-600 hover:bg-slate-100 transition">
+      🤖 AIチューター・全単元類題
     </button>
   </nav>
 
@@ -58,7 +75,6 @@
 
     <!-- ==================== 1. 2次関数モジュール ==================== -->
     <section id="funcsModule" class="module-view space-y-4">
-      <!-- サブモード切替 -->
       <div class="bg-white p-2 rounded-xl shadow-sm border border-slate-200 flex gap-2">
         <button onclick="switchFuncMode('graph')" id="btnModeGraph" class="flex-1 py-2 px-3 rounded-lg font-bold text-sm bg-indigo-50 text-indigo-700 border border-indigo-200 transition">
           ① グラフと変域（<span class="math-var">y = ax</span>²）
@@ -106,11 +122,13 @@
             </div>
           </div>
 
-          <!-- 変域結果ボックス -->
           <div class="bg-indigo-50 border border-indigo-200 p-4 rounded-xl space-y-2">
-            <h3 class="font-bold text-indigo-900 text-sm">📊 変域の計算結果</h3>
+            <h3 class="font-bold text-indigo-900 text-sm">📊 変域と変化の割合</h3>
             <p class="text-sm"><span class="math-var">x</span> の変域： <strong id="domainText" class="text-base text-slate-800">-2 ≦ x ≦ 3</strong></p>
             <p class="text-sm"><span class="math-var">y</span> の変域： <strong id="rangeText" class="text-lg text-indigo-700">0 ≦ y ≦ 9</strong></p>
+            <p class="text-xs text-slate-700 pt-1 border-t border-indigo-200">
+              変化の割合 <span class="math-var">a(p + q)</span>： <strong id="rateOfChangeText" class="text-indigo-700">1 × (-2 + 3) = 1</strong>
+            </p>
             <div id="zeroCrossWarning" class="mt-2 p-2.5 bg-amber-100 border border-amber-300 text-amber-900 rounded-lg text-xs font-bold leading-relaxed">
               ⚠️ <span class="math-var">x</span> の変域が 0 をまたいでいるため、端の値を代入するだけでなく、頂点（0）が最小値（または最大値）になります！
             </div>
@@ -136,7 +154,6 @@
           </div>
         </div>
 
-        <!-- 時間コントロール＆状態表示 -->
         <div class="bg-indigo-50 border border-indigo-200 p-4 rounded-xl space-y-3">
           <div class="flex flex-wrap items-center justify-between gap-2">
             <div class="flex items-center gap-2">
@@ -172,7 +189,100 @@
       </div>
     </section>
 
-    <!-- ==================== 2. 円周角の定理モジュール ==================== -->
+    <!-- ==================== 2. 放物線と面積（苦手克服・無限類題ドリル） ==================== -->
+    <section id="parabolaAreaModule" class="module-view hidden space-y-4">
+      <div class="bg-white p-2 rounded-xl shadow-sm border border-slate-200 flex gap-2">
+        <button onclick="switchParaAreaMode('sim')" id="btnParaSim" class="flex-1 py-2 px-3 rounded-lg font-bold text-sm bg-indigo-50 text-indigo-700 border border-indigo-200 transition">
+          ① 苦手プリント図解シミュレーター（大問12 ①・②）
+        </button>
+        <button onclick="switchParaAreaMode('drill')" id="btnParaDrill" class="flex-1 py-2 px-3 rounded-lg font-bold text-sm text-slate-600 hover:bg-slate-50 transition">
+          ② 数値が自動で変わる！無限類題ドリル
+        </button>
+      </div>
+
+      <!-- ① 苦手プリント図解シミュレーター -->
+      <div id="paraSimArea" class="bg-white p-4 md:p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
+        <div class="flex flex-wrap gap-2">
+          <button onclick="setParaSimPreset(1)" id="btnPreset1" class="px-4 py-2 rounded-lg font-bold text-xs bg-indigo-600 text-white shadow-sm transition">
+            プリント問題①（y = x² と y = 1/4 x²）
+          </button>
+          <button onclick="setParaSimPreset(2)" id="btnPreset2" class="px-4 py-2 rounded-lg font-bold text-xs bg-slate-100 text-slate-700 hover:bg-slate-200 transition">
+            プリント問題②（y = ax² と y = -1/2 x²）
+          </button>
+        </div>
+
+        <div id="paraSimProblemBox" class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 text-sm leading-relaxed"></div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div class="lg:col-span-7 flex flex-col items-center">
+            <canvas id="paraAreaCanvas" width="460" height="400" class="w-full max-w-[460px] border border-slate-200 rounded-xl bg-slate-50"></canvas>
+          </div>
+
+          <div class="lg:col-span-5 flex flex-col justify-between space-y-4">
+            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+              <div class="text-xs font-bold text-slate-500">スライダーで座標を変えて面積の変化を体感しよう</div>
+              <div>
+                <div class="flex justify-between text-sm font-bold mb-1">
+                  <span id="paraSlider1Label">点Aの x座標</span>
+                  <span id="paraSlider1Val" class="text-indigo-600">-4</span>
+                </div>
+                <input type="range" id="paraSlider1" min="-5" max="-1" step="1" value="-4" oninput="updateParaSim()" class="w-full accent-indigo-600">
+              </div>
+              <div id="paraSlider2Wrap" class="hidden">
+                <div class="flex justify-between text-sm font-bold mb-1">
+                  <span id="paraSlider2Label">線分ABの x座標</span>
+                  <span id="paraSlider2Val" class="text-emerald-600">2</span>
+                </div>
+                <input type="range" id="paraSlider2" min="1" max="4" step="1" value="2" oninput="updateParaSim()" class="w-full accent-emerald-600">
+              </div>
+            </div>
+
+            <div id="paraSimResultBox" class="bg-indigo-50 border border-indigo-200 p-4 rounded-xl space-y-2 text-sm"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ② 数値が自動で変わる！無限類題ドリル -->
+      <div id="paraDrillArea" class="hidden bg-white p-4 md:p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
+        <div class="flex flex-wrap justify-between items-center gap-3 bg-emerald-50 border border-emerald-200 p-4 rounded-xl">
+          <div>
+            <h3 class="font-bold text-emerald-900 text-base">🔄 数値が毎回自動で変わる！類題自動更新ドリル</h3>
+            <p class="text-xs text-emerald-800 mt-0.5">ボタンを押すたびに数値とグラフが新しく自動作成されます（通信不要で何度でも演習できます）。</p>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <select id="drillPatternSelect" onchange="generateAutoDrill()" class="p-2 border border-emerald-300 rounded-lg text-xs font-bold bg-white">
+              <option value="random">全パターンからランダム出題</option>
+              <option value="p1">パターン①：2つの上向き放物線と△ABC</option>
+              <option value="p2">パターン②：上下2つの放物線と比例定数a・△ABC</option>
+              <option value="p3">パターン③：放物線と直線の交点・△OABの面積</option>
+              <option value="p4">パターン④：2次関数の変域・変化の割合</option>
+            </select>
+            <button onclick="generateAutoDrill()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-xs shadow-sm transition">
+              🔄 新しい問題に更新
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div class="lg:col-span-6 flex flex-col items-center">
+            <canvas id="drillCanvas" width="420" height="360" class="w-full max-w-[420px] border border-slate-200 rounded-xl bg-slate-50"></canvas>
+          </div>
+          <div class="lg:col-span-6 flex flex-col justify-between space-y-3">
+            <div id="drillQuestionCard" class="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-3 text-sm leading-relaxed"></div>
+            <div class="flex gap-2">
+              <button onclick="sendDrillToNotes()" class="flex-1 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded-lg text-xs transition">
+                📝 この問題を学習メモに保存
+              </button>
+              <button onclick="generateAutoDrill()" class="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-xs transition">
+                次の類題へ進む →
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 3. 円周角の定理モジュール ==================== -->
     <section id="geomeModule" class="module-view hidden bg-white p-4 md:p-6 rounded-xl shadow-sm border border-slate-200">
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <div class="lg:col-span-7 flex flex-col items-center">
@@ -223,7 +333,7 @@
       </div>
     </section>
 
-    <!-- ==================== 3. リアルタイム学習メモボード ==================== -->
+    <!-- ==================== 4. リアルタイム学習メモボード ==================== -->
     <section id="notesModule" class="module-view hidden space-y-4">
       <div class="bg-white p-4 md:p-5 rounded-xl shadow-sm border border-slate-200 space-y-3">
         <div class="flex flex-wrap justify-between items-center gap-2">
@@ -240,9 +350,11 @@
 
         <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
           <select id="noteTopic" class="p-2.5 border border-slate-300 rounded-lg text-sm font-bold bg-slate-50">
-            <option value="2次関数">単元：2次関数</option>
+            <option value="放物線と面積">単元：放物線と面積</option>
+            <option value="2次関数・変域">単元：2次関数・変域</option>
             <option value="動点と面積">単元：動点と面積</option>
             <option value="円周角の定理">単元：円周角の定理</option>
+            <option value="相似・三平方">単元：相似・三平方</option>
             <option value="その他">単元：その他</option>
           </select>
           <select id="noteType" class="p-2.5 border border-slate-300 rounded-lg text-sm font-bold bg-slate-50">
@@ -258,15 +370,14 @@
         </div>
       </div>
 
-      <!-- メモ一覧 -->
       <div id="notesList" class="space-y-2.5"></div>
     </section>
 
-    <!-- ==================== 4. Gemini AI チューター＆問題作成 ==================== -->
+    <!-- ==================== 5. Gemini AI チューター＆全単元問題作成 ==================== -->
     <section id="aiModule" class="module-view hidden space-y-4">
       <div id="aiNoKeyBanner" class="bg-amber-50 border border-amber-300 p-4 rounded-xl flex flex-wrap justify-between items-center gap-3">
         <div class="text-sm text-amber-900">
-          <strong>Gemini APIキーが未設定です：</strong> AI解説や類題作成を使うにはAPIキーを設定してください（キーは端末のブラウザ内にのみ保存されます）。
+          <strong>Gemini APIキーが未設定です：</strong> AI解説や類題作成を使うには右上のボタンからAPIキーを設定してください。
         </div>
         <button onclick="openApiModal()" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg text-xs transition">
           APIキーを設定する
@@ -277,57 +388,98 @@
         <!-- 左：ステップ解説チャット -->
         <div class="bg-white p-4 md:p-5 rounded-xl shadow-sm border border-slate-200 flex flex-col space-y-3">
           <h2 class="text-base font-bold text-slate-800">💬 ステップ解説チューター</h2>
-          <p class="text-xs text-slate-500">つまずいている問題や疑問を入力すると、中3生向けに段階的なヒントと解説を作成します。</p>
-          <textarea id="aiQuestionInput" rows="3" placeholder="例：変化の割合がわかりません。" class="w-full p-3 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"></textarea>
+          <p class="text-xs text-slate-500">プリントの問題文や疑問を入力すると、中3生向けに段階的なヒントと解説を作成します。</p>
+          <textarea id="aiQuestionInput" rows="3" placeholder="例：2つの放物線 y=x² と y=1/4x² の間にできる△ABCの面積の求め方がわかりません。" class="w-full p-3 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"></textarea>
           <button onclick="askGeminiTutor()" id="btnAskTutor" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-sm transition">
             AIにステップ解説をお願いする
           </button>
           <div id="aiTutorOutput" class="hidden bg-slate-50 border border-slate-200 p-3.5 rounded-lg text-sm leading-relaxed whitespace-pre-wrap text-slate-800 max-h-96 overflow-y-auto"></div>
         </div>
 
-        <!-- 右：類題・確認テスト自動生成 -->
+        <!-- 右：全単元網羅・定期テスト予想問題メーカー -->
         <div class="bg-white p-4 md:p-5 rounded-xl shadow-sm border border-slate-200 flex flex-col space-y-3">
-          <h2 class="text-base font-bold text-slate-800">✍️ 定期テスト予想問題・類題メーカー</h2>
-          <p class="text-xs text-slate-500">単元とレベルを選んで、その場で練習問題（ヒント・解説付き）を生成できます。</p>
+          <h2 class="text-base font-bold text-slate-800">✍️ テスト範囲網羅・予想問題メーカー</h2>
+          <p class="text-xs text-slate-500">単元とレベルを選んで、その場で練習問題（ヒント・解説付き）を自動生成できます。</p>
           <div class="grid grid-cols-2 gap-2">
             <select id="genTopic" class="p-2.5 border border-slate-300 rounded-lg text-sm font-bold bg-slate-50">
-              <option value="2次関数の変域">2次関数の変域</option>
+              <option value="2つの放物線と軸に平行な線分・三角形の面積">2つの放物線と三角形の面積</option>
+              <option value="2次関数の変化の割合と変域">2次関数の変化の割合と変域</option>
               <option value="2次関数と動点・面積の文章題">動点と面積の文章題</option>
-              <option value="放物線と直線の交点・面積">放物線と直線の融合問題</option>
-              <option value="円周角の定理と角度">円周角の定理（角度・証明）</option>
+              <option value="放物線と直線の交点・面積・等積変形">放物線と直線の融合問題</option>
+              <option value="円周角の定理と円に内接する四角形・角度">円周角の定理（角度・証明）</option>
+              <option value="相似な図形と平行線と線分の比">相似と平行線・線分の比</option>
+              <option value="三平方の定理の平面・空間図形への応用">三平方の定理（応用）</option>
+              <option value="中3数学 定期テスト総合ミックス演習">テスト総合ミックス演習</option>
             </select>
             <select id="genLevel" class="p-2.5 border border-slate-300 rounded-lg text-sm font-bold bg-slate-50">
               <option value="基本〜標準（定期テスト頻出）">レベル：基本〜標準</option>
-              <option value="応用（差がつく文章題）">レベル：応用・差がつく問題</option>
+              <option value="応用（差がつく文章題・図形融合）">レベル：応用・差がつく問題</option>
             </select>
           </div>
-          <button onclick="generatePracticeProblem()" id="btnGenProblem" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-sm transition">
-            練習問題を1題作成する
-          </button>
-          <div id="aiProblemOutput" class="hidden space-y-2.5"></div>
+          <div class="grid grid-cols-2 gap-2">
+            <button onclick="generatePracticeProblem(1)" id="btnGenProblem" class="py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-xs transition">
+              練習問題を1題作成
+            </button>
+            <button onclick="generatePracticeProblem(3)" id="btnGenProblem3" class="py-2.5 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-lg text-xs transition">
+              まとめて3題自動作成
+            </button>
+          </div>
+          <div id="aiProblemOutput" class="hidden space-y-2.5 max-h-[420px] overflow-y-auto"></div>
         </div>
       </div>
     </section>
 
   </main>
 
-  <!-- APIキー設定モーダル -->
-  <div id="apiModal" class="hidden fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-md w-full p-5 shadow-xl space-y-4">
-      <div class="flex justify-between items-center">
-        <h3 class="text-lg font-bold text-slate-800">🔑 Gemini API 設定</h3>
+  <!-- APIキー＆GitHub自動更新モーダル -->
+  <div id="apiModal" class="hidden fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-5 shadow-xl space-y-4 my-auto">
+      <div class="flex justify-between items-center border-b pb-2">
+        <h3 class="text-lg font-bold text-slate-800">⚙️ APIキー・GitHub自動更新設定</h3>
         <button onclick="closeApiModal()" class="text-slate-400 hover:text-slate-600 text-xl font-bold">&times;</button>
       </div>
-      <p class="text-xs text-slate-600 leading-relaxed">
-        Google AI Studio で取得した Gemini API キーを入力してください。キーはお使いのブラウザ（localStorage）にのみ保存され、GitHub上には公開されません。
-      </p>
-      <input type="password" id="apiKeyInput" placeholder="AIzaSy..." class="w-full p-2.5 border border-slate-300 rounded-lg text-sm font-mono">
-      <div class="flex justify-between gap-2 pt-2">
-        <button onclick="clearApiKey()" class="px-3 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 rounded-lg">削除</button>
-        <div class="flex gap-2">
-          <button onclick="closeApiModal()" class="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-lg">キャンセル</button>
-          <button onclick="saveApiKey()" class="px-4 py-2 text-xs font-bold bg-indigo-600 text-white hover:bg-indigo-700 rounded-lg">保存する</button>
+
+      <!-- Gemini API 設定 -->
+      <div class="space-y-2">
+        <label class="block text-xs font-bold text-slate-700">1. Gemini API キー（AI解説・問題作成用）</label>
+        <input type="password" id="apiKeyInput" placeholder="AIzaSy..." class="w-full p-2.5 border border-slate-300 rounded-lg text-sm font-mono">
+        <div class="flex justify-between items-center">
+          <button onclick="clearApiKey()" class="text-xs font-bold text-rose-600 hover:underline">キーを削除</button>
+          <button onclick="saveApiKey()" class="px-4 py-1.5 text-xs font-bold bg-indigo-600 text-white hover:bg-indigo-700 rounded-lg">APIキーを保存</button>
         </div>
+      </div>
+
+      <hr class="border-slate-200">
+
+      <!-- GitHub 自動更新（先生PC用） -->
+      <div class="space-y-2.5 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+        <div class="flex justify-between items-center">
+          <span class="text-xs font-bold text-slate-800">2. GitHub ワンクリック自動更新（先生用）</span>
+          <span class="text-[10px] bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded font-bold">PCブラウザ内保存</span>
+        </div>
+        <p class="text-[11px] text-slate-600 leading-relaxed">
+          GitHubの Personal Access Token（<code>repo</code> 権限）を1度登録しておくと、次回から新しいHTMLコードを下に貼り付けてボタンを押すだけでGitHub上の <code>index.html</code> が自動更新されます。
+        </p>
+        <div class="grid grid-cols-2 gap-2">
+          <input type="text" id="ghRepoInput" placeholder="trhtiachijp/math-app" class="p-2 border border-slate-300 rounded text-xs font-mono bg-white">
+          <input type="password" id="ghTokenInput" placeholder="ghp_... または github_pat_..." class="p-2 border border-slate-300 rounded text-xs font-mono bg-white">
+        </div>
+        <div class="flex justify-end">
+          <button onclick="saveGithubConfig()" class="px-3 py-1.5 bg-slate-700 hover:bg-slate-800 text-white font-bold rounded text-xs">GitHub設定を保存</button>
+        </div>
+
+        <div class="pt-2 border-t border-slate-200 space-y-2">
+          <label class="block text-[11px] font-bold text-slate-700">新しい index.html コードを貼り付けて自動反映：</label>
+          <textarea id="ghNewCodeInput" rows="3" placeholder="ここに新しいHTMLコード全体を貼り付けて「GitHubへ自動更新」を押します..." class="w-full p-2 border border-slate-300 rounded text-xs font-mono bg-white"></textarea>
+          <button onclick="deployToGithub()" id="btnDeployGh" class="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-xs shadow-sm transition">
+            🚀 GitHubへ自動更新（コミット）する
+          </button>
+          <div id="ghDeployStatus" class="hidden text-xs p-2 rounded"></div>
+        </div>
+      </div>
+
+      <div class="flex justify-end">
+        <button onclick="closeApiModal()" class="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-lg">閉じる</button>
       </div>
     </div>
   </div>
@@ -350,9 +502,13 @@
       if (tabId === 'funcs') {
         updateParabola();
         drawMovingScene();
+      } else if (tabId === 'parabolaArea') {
+        updateParaSim();
+        if (!currentDrillData) generateAutoDrill();
       } else if (tabId === 'geome') {
         drawCircle();
       }
+      checkRemoteUpdate(false);
     }
 
     /* ==================== 1-A. 2次関数グラフ＆変域 ==================== */
@@ -413,7 +569,9 @@
         yMax = Math.max(y1, y2);
       }
 
+      const rate = Number((a * (xMin + xMax)).toFixed(2));
       document.getElementById('rangeText').textContent = `${Number(yMin.toFixed(2))} ≦ y ≦ ${Number(yMax.toFixed(2))}`;
+      document.getElementById('rateOfChangeText').textContent = `${a} × (${xMin} + ${xMax}) = ${rate}`;
       document.getElementById('zeroCrossWarning').classList.toggle('hidden', !crossesZero);
 
       drawParabolaCanvas(a, xMin, xMax, yMin, yMax);
@@ -431,7 +589,6 @@
       const scaleX = 36;
       const scaleY = 14;
 
-      // グリッド
       ctx.strokeStyle = '#e2e8f0';
       ctx.lineWidth = 1;
       for (let gx = -6; gx <= 6; gx++) {
@@ -447,7 +604,6 @@
         ctx.stroke();
       }
 
-      // 変域ボックス背景
       const pxMin = cx + xMin * scaleX;
       const pxMax = cx + xMax * scaleX;
       const pyTop = cy - yMax * scaleY;
@@ -459,7 +615,6 @@
       ctx.strokeRect(pxMin, pyTop, pxMax - pxMin, pyBot - pyTop);
       ctx.setLineDash([]);
 
-      // 座標軸
       ctx.strokeStyle = '#64748b';
       ctx.lineWidth = 1.5;
       ctx.beginPath();
@@ -473,7 +628,6 @@
       ctx.fillText('y', cx + 8, 16);
       ctx.fillText('O', cx - 14, cy + 15);
 
-      // 放物線全体（薄線）
       ctx.strokeStyle = '#94a3b8';
       ctx.lineWidth = 2;
       ctx.beginPath();
@@ -486,7 +640,6 @@
       }
       ctx.stroke();
 
-      // 変域内の放物線（強調）
       ctx.strokeStyle = '#4f46e5';
       ctx.lineWidth = 4;
       ctx.beginPath();
@@ -499,7 +652,6 @@
       }
       ctx.stroke();
 
-      // 端点ドット
       [xMin, xMax].forEach(xv => {
         const yv = a * xv * xv;
         ctx.fillStyle = '#10b981';
@@ -572,7 +724,6 @@
       }
       document.getElementById('movingAreaText').textContent = `${area.toFixed(1)} cm²`;
 
-      // 左：長方形キャンバス
       const rCanvas = document.getElementById('movingRectCanvas');
       const rCtx = rCanvas.getContext('2d');
       rCtx.clearRect(0, 0, rCanvas.width, rCanvas.height);
@@ -583,19 +734,12 @@
       const C = { x: ox + rw, y: oy + rh };
       const D = { x: ox + rw, y: oy };
 
-      let P = { x: A.x, y: A.y };
-      if (t <= 8) {
-        P = { x: A.x, y: A.y + t * 20 };
-      } else {
-        P = { x: B.x + (t - 8) * 20, y: B.y };
-      }
+      let P = t <= 8 ? { x: A.x, y: A.y + t * 20 } : { x: B.x + (t - 8) * 20, y: B.y };
 
-      // 長方形
       rCtx.strokeStyle = '#334155';
       rCtx.lineWidth = 2;
       rCtx.strokeRect(ox, oy, rw, rh);
 
-      // △APC塗りつぶし
       rCtx.fillStyle = 'rgba(79, 70, 229, 0.25)';
       rCtx.strokeStyle = '#4f46e5';
       rCtx.lineWidth = 2.5;
@@ -607,7 +751,6 @@
       rCtx.fill();
       rCtx.stroke();
 
-      // 頂点ラベル
       rCtx.fillStyle = '#1e293b';
       rCtx.font = 'bold 13px sans-serif';
       rCtx.fillText('A', A.x - 16, A.y + 5);
@@ -617,14 +760,12 @@
       rCtx.fillText('8cm', ox - 42, oy + rh / 2);
       rCtx.fillText('12cm', ox + rw / 2 - 16, oy + rh + 22);
 
-      // 点P
       rCtx.fillStyle = '#e11d48';
       rCtx.beginPath();
       rCtx.arc(P.x, P.y, 6, 0, Math.PI * 2);
       rCtx.fill();
       rCtx.fillText('P', P.x - 18, P.y - 6);
 
-      // 右：時間-面積グラフ
       const gCanvas = document.getElementById('movingGraphCanvas');
       const gCtx = gCanvas.getContext('2d');
       gCtx.clearRect(0, 0, gCanvas.width, gCanvas.height);
@@ -633,7 +774,6 @@
       const sx = gw / 22;
       const sy = gh / 55;
 
-      // グリッド＆軸
       gCtx.strokeStyle = '#cbd5e1';
       gCtx.lineWidth = 1;
       gCtx.beginPath();
@@ -641,7 +781,6 @@
       gCtx.moveTo(gx0, gy0); gCtx.lineTo(gx0, gy0 - gh);
       gCtx.stroke();
 
-      // 補助破線 (8, 48)
       gCtx.setLineDash([3, 3]);
       gCtx.beginPath();
       gCtx.moveTo(gx0 + 8 * sx, gy0);
@@ -658,7 +797,6 @@
       gCtx.fillText('48', gx0 - 20, gy0 - 48 * sy + 4);
       gCtx.fillText('y(cm²)', gx0 - 38, gy0 - gh - 6);
 
-      // グラフ折れ線
       gCtx.strokeStyle = '#4f46e5';
       gCtx.lineWidth = 3;
       gCtx.beginPath();
@@ -667,14 +805,390 @@
       gCtx.lineTo(gx0 + 20 * sx, gy0);
       gCtx.stroke();
 
-      // 現在位置ドット
       gCtx.fillStyle = '#e11d48';
       gCtx.beginPath();
       gCtx.arc(gx0 + t * sx, gy0 - area * sy, 6, 0, Math.PI * 2);
       gCtx.fill();
     }
 
-    /* ==================== 2. 円周角の定理シミュレーター ==================== */
+    /* ==================== 2-A. 放物線と面積（苦手プリント大問12 シミュレーター） ==================== */
+    let paraPreset = 1;
+
+    function switchParaAreaMode(mode) {
+      const simEl = document.getElementById('paraSimArea');
+      const drillEl = document.getElementById('paraDrillArea');
+      const btnSim = document.getElementById('btnParaSim');
+      const btnDrill = document.getElementById('btnParaDrill');
+
+      if (mode === 'sim') {
+        simEl.classList.remove('hidden');
+        drillEl.classList.add('hidden');
+        btnSim.className = 'flex-1 py-2 px-3 rounded-lg font-bold text-sm bg-indigo-50 text-indigo-700 border border-indigo-200 transition';
+        btnDrill.className = 'flex-1 py-2 px-3 rounded-lg font-bold text-sm text-slate-600 hover:bg-slate-50 transition';
+        updateParaSim();
+      } else {
+        simEl.classList.add('hidden');
+        drillEl.classList.remove('hidden');
+        btnDrill.className = 'flex-1 py-2 px-3 rounded-lg font-bold text-sm bg-indigo-50 text-indigo-700 border border-indigo-200 transition';
+        btnSim.className = 'flex-1 py-2 px-3 rounded-lg font-bold text-sm text-slate-600 hover:bg-slate-50 transition';
+        if (!currentDrillData) generateAutoDrill();
+      }
+    }
+
+    function setParaSimPreset(num) {
+      paraPreset = num;
+      const b1 = document.getElementById('btnPreset1');
+      const b2 = document.getElementById('btnPreset2');
+      const s1 = document.getElementById('paraSlider1');
+      const s2Wrap = document.getElementById('paraSlider2Wrap');
+
+      if (num === 1) {
+        b1.className = 'px-4 py-2 rounded-lg font-bold text-xs bg-indigo-600 text-white shadow-sm transition';
+        b2.className = 'px-4 py-2 rounded-lg font-bold text-xs bg-slate-100 text-slate-700 hover:bg-slate-200 transition';
+        document.getElementById('paraSlider1Label').textContent = '点Aの x座標';
+        s1.min = -5; s1.max = -1; s1.value = -4;
+        s2Wrap.classList.add('hidden');
+      } else {
+        b2.className = 'px-4 py-2 rounded-lg font-bold text-xs bg-indigo-600 text-white shadow-sm transition';
+        b1.className = 'px-4 py-2 rounded-lg font-bold text-xs bg-slate-100 text-slate-700 hover:bg-slate-200 transition';
+        document.getElementById('paraSlider1Label').textContent = '点Cの x座標';
+        s1.min = -4; s1.max = -1; s1.value = -3;
+        s2Wrap.classList.remove('hidden');
+        document.getElementById('paraSlider2').value = 2;
+      }
+      updateParaSim();
+    }
+
+    function updateParaSim() {
+      const canvas = document.getElementById('paraAreaCanvas');
+      const ctx = canvas.getContext('2d');
+      const w = canvas.width, h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+
+      const v1 = parseInt(document.getElementById('paraSlider1').value, 10);
+      document.getElementById('paraSlider1Val').textContent = v1;
+
+      if (paraPreset === 1) {
+        const xA = v1;
+        const yA = xA * xA;
+        const yB = 0.25 * xA * xA;
+        const xC = -xA;
+        const baseBC = xC - xA;
+        const heightAB = yA - yB;
+        const area = 0.5 * baseBC * heightAB;
+
+        document.getElementById('paraSimProblemBox').innerHTML = `
+          <span class="inline-block bg-indigo-600 text-white text-xs font-bold px-2 py-0.5 rounded mr-1">問題①</span>
+          放物線 <span class="math-var font-bold">y = x²</span> 上の点 A(${xA}, ${yA}) を通り、<span class="math-var">y</span> 軸に平行な直線と <span class="math-var font-bold">y = 1/4 x²</span> との交点を B とする。また、B を通り <span class="math-var">x</span> 軸に平行な直線と <span class="math-var font-bold">y = 1/4 x²</span> との交点を C とする。
+        `;
+
+        document.getElementById('paraSimResultBox').innerHTML = `
+          <h4 class="font-bold text-indigo-900">✅ ステップごとの求め方と答え</h4>
+          <p><strong>① 点Bの座標：</strong> AB // y軸 より x座標は同じ ${xA}。y = 1/4 × (${xA})² = ${yB} → <span class="text-indigo-700 font-bold">B(${xA}, ${yB})</span></p>
+          <p><strong>② 点Cの座標：</strong> BC // x軸 で左右対称なので → <span class="text-indigo-700 font-bold">C(${xC}, ${yB})</span></p>
+          <p><strong>③ △ABCの面積：</strong><br>
+          ・底辺 BC = ${xC} - (${xA}) = <strong>${baseBC}</strong><br>
+          ・高さ AB = ${yA} - ${yB} = <strong>${heightAB}</strong><br>
+          ・面積 = 1/2 × ${baseBC} × ${heightAB} = <strong class="text-rose-600 text-base">${area}</strong></p>
+        `;
+
+        // 描画
+        const cx = w / 2, cy = h - 45;
+        const sx = 36, sy = 12;
+        drawAxes(ctx, w, h, cx, cy);
+        drawCurve(ctx, w, cx, cy, sx, sy, 1, '#4f46e5');
+        drawCurve(ctx, w, cx, cy, sx, sy, 0.25, '#0ea5e9');
+
+        const pA = { x: cx + xA * sx, y: cy - yA * sy };
+        const pB = { x: cx + xA * sx, y: cy - yB * sy };
+        const pC = { x: cx + xC * sx, y: cy - yB * sy };
+
+        ctx.fillStyle = 'rgba(244, 63, 94, 0.2)';
+        ctx.strokeStyle = '#e11d48';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(pA.x, pA.y); ctx.lineTo(pB.x, pB.y); ctx.lineTo(pC.x, pC.y);
+        ctx.closePath();
+        ctx.fill(); ctx.stroke();
+
+        drawPointLabel(ctx, pA, `A(${xA}, ${yA})`, -75, -6);
+        drawPointLabel(ctx, pB, `B(${xA}, ${yB})`, -72, 14);
+        drawPointLabel(ctx, pC, `C(${xC}, ${yB})`, 8, 14);
+      } else {
+        const xC = v1;
+        const yC = xC * xC; // a = 1
+        const xB = parseInt(document.getElementById('paraSlider2').value, 10);
+        document.getElementById('paraSlider2Val').textContent = xB;
+
+        const yB = xB * xB;
+        const yA = -0.5 * xB * xB;
+        const baseAB = yB - yA;
+        const heightC = xB - xC;
+        const area = 0.5 * baseAB * heightC;
+
+        document.getElementById('paraSimProblemBox').innerHTML = `
+          <span class="inline-block bg-indigo-600 text-white text-xs font-bold px-2 py-0.5 rounded mr-1">問題②</span>
+          放物線 <span class="math-var font-bold">y = ax²</span> 上に点 C(${xC}, ${yC}) がある。また、<span class="math-var">x</span> 座標が ${xB} で <span class="math-var">y</span> 軸に平行な線分 AB の両端は、それぞれ <span class="math-var font-bold">y = ax²</span> と <span class="math-var font-bold">y = -1/2 x²</span> 上にある。
+        `;
+
+        document.getElementById('paraSimResultBox').innerHTML = `
+          <h4 class="font-bold text-indigo-900">✅ ステップごとの求め方と答え</h4>
+          <p><strong>① 比例定数 a と点Bの座標：</strong> C(${xC}, ${yC}) を代入して ${yC} = a(${xC})² → <strong>a = 1</strong>。x = ${xB} を代入して <span class="text-indigo-700 font-bold">B(${xB}, ${yB})</span></p>
+          <p><strong>② △ABCの面積：</strong><br>
+          ・点Aのy座標：-1/2 × ${xB}² = <strong>${yA}</strong><br>
+          ・底辺 AB = ${yB} - (${yA}) = <strong>${baseAB}</strong><br>
+          ・高さ（CからABまでの横幅）= ${xB} - (${xC}) = <strong>${heightC}</strong><br>
+          ・面積 = 1/2 × ${baseAB} × ${heightC} = <strong class="text-rose-600 text-base">${area}</strong></p>
+        `;
+
+        const cx = w / 2, cy = h * 0.65;
+        const sx = 38, sy = 13;
+        drawAxes(ctx, w, h, cx, cy);
+        drawCurve(ctx, w, cx, cy, sx, sy, 1, '#4f46e5');
+        drawCurve(ctx, w, cx, cy, sx, sy, -0.5, '#0ea5e9');
+
+        const pA = { x: cx + xB * sx, y: cy - yA * sy };
+        const pB = { x: cx + xB * sx, y: cy - yB * sy };
+        const pC = { x: cx + xC * sx, y: cy - yC * sy };
+
+        ctx.fillStyle = 'rgba(244, 63, 94, 0.2)';
+        ctx.strokeStyle = '#e11d48';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(pA.x, pA.y); ctx.lineTo(pB.x, pB.y); ctx.lineTo(pC.x, pC.y);
+        ctx.closePath();
+        ctx.fill(); ctx.stroke();
+
+        // 高さの破線
+        ctx.strokeStyle = '#10b981';
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.moveTo(pC.x, pC.y);
+        ctx.lineTo(pB.x, pC.y);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        drawPointLabel(ctx, pA, `A(${xB}, ${yA})`, 8, 12);
+        drawPointLabel(ctx, pB, `B(${xB}, ${yB})`, 8, -4);
+        drawPointLabel(ctx, pC, `C(${xC}, ${yC})`, -75, -6);
+      }
+    }
+
+    function drawAxes(ctx, w, h, cx, cy) {
+      ctx.strokeStyle = '#94a3b8';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(0, cy); ctx.lineTo(w, cy);
+      ctx.moveTo(cx, 0); ctx.lineTo(cx, h);
+      ctx.stroke();
+      ctx.fillStyle = '#475569';
+      ctx.font = 'bold 12px sans-serif';
+      ctx.fillText('x', w - 14, cy - 6);
+      ctx.fillText('y', cx + 8, 14);
+      ctx.fillText('O', cx - 14, cy + 14);
+    }
+
+    function drawCurve(ctx, w, cx, cy, sx, sy, a, color) {
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      for (let px = 0; px <= w; px += 2) {
+        const x = (px - cx) / sx;
+        const y = a * x * x;
+        const py = cy - y * sy;
+        if (px === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+    }
+
+    function drawPointLabel(ctx, pt, text, dx, dy) {
+      ctx.fillStyle = '#e11d48';
+      ctx.beginPath();
+      ctx.arc(pt.x, pt.y, 5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#0f172a';
+      ctx.font = 'bold 12px sans-serif';
+      ctx.fillText(text, pt.x + dx, pt.y + dy);
+    }
+
+    /* ==================== 2-B. 数値自動更新・無限類題ドリル ==================== */
+    let currentDrillData = null;
+
+    function generateAutoDrill() {
+      const sel = document.getElementById('drillPatternSelect').value;
+      const patterns = ['p1', 'p2', 'p3', 'p4'];
+      const chosen = sel === 'random' ? patterns[Math.floor(Math.random() * patterns.length)] : sel;
+
+      const canvas = document.getElementById('drillCanvas');
+      const ctx = canvas.getContext('2d');
+      const w = canvas.width, h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+
+      if (chosen === 'p1') {
+        const pairs = [
+          { a1: 2, a1Str: '2x²', a2: 0.5, a2Str: '1/2 x²', x: -2 },
+          { a1: 2, a1Str: '2x²', a2: 0.5, a2Str: '1/2 x²', x: -4 },
+          { a1: 1, a1Str: 'x²', a2: 0.25, a2Str: '1/4 x²', x: -2 },
+          { a1: 3, a1Str: '3x²', a2: 1, a2Str: 'x²', x: -2 }
+        ];
+        const p = pairs[Math.floor(Math.random() * pairs.length)];
+        const yA = p.a1 * p.x * p.x;
+        const yB = p.a2 * p.x * p.x;
+        const xC = -p.x;
+        const base = xC - p.x;
+        const height = yA - yB;
+        const area = 0.5 * base * height;
+
+        currentDrillData = {
+          topic: '放物線と面積',
+          title: '【類題①】2つの上向き放物線と△ABCの面積',
+          question: `放物線 y = ${p.a1Str} 上に x座標が ${p.x} の点 A がある。A を通り y軸に平行な直線と y = ${p.a2Str} との交点を B とし、B を通り x軸に平行な直線と y = ${p.a2Str} との交点を C とする。\n(1) 点 B, C の座標を求めなさい。\n(2) △ABC の面積を求めなさい。`,
+          hint: `AB // y軸 なので点 B の x座標は点 A と同じ ${p.x} です。また、放物線は y軸に対称なので点 C の x座標は符号が逆になります。`,
+          answer: `(1) 点A(${p.x}, ${yA}) より、点Bは y = ${p.a2Str} に x = ${p.x} を代入して B(${p.x}, ${yB})。左右対称より C(${xC}, ${yB})。\n(2) 底辺 BC = ${xC} - (${p.x}) = ${base}、高さ AB = ${yA} - ${yB} = ${height}。\nよって △ABC = 1/2 × ${base} × ${height} = ${area}`
+        };
+
+        const cx = w / 2, cy = h - 40, sx = 36, sy = Math.min(18, (h - 70) / (yA + 2));
+        drawAxes(ctx, w, h, cx, cy);
+        drawCurve(ctx, w, cx, cy, sx, sy, p.a1, '#4f46e5');
+        drawCurve(ctx, w, cx, cy, sx, sy, p.a2, '#0ea5e9');
+        const pA = { x: cx + p.x * sx, y: cy - yA * sy };
+        const pB = { x: cx + p.x * sx, y: cy - yB * sy };
+        const pC = { x: cx + xC * sx, y: cy - yB * sy };
+        ctx.fillStyle = 'rgba(244, 63, 94, 0.2)';
+        ctx.strokeStyle = '#e11d48';
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(pA.x, pA.y); ctx.lineTo(pB.x, pB.y); ctx.lineTo(pC.x, pC.y); ctx.closePath();
+        ctx.fill(); ctx.stroke();
+        drawPointLabel(ctx, pA, `A(${p.x}, ${yA})`, -68, -4);
+        drawPointLabel(ctx, pB, 'B', -18, 12);
+        drawPointLabel(ctx, pC, 'C', 8, 12);
+
+      } else if (chosen === 'p2') {
+        const configs = [
+          { a: 2, xC: -2, b2: 0.5, b2Str: '-1/2 x²', xB: 2 },
+          { a: 1, xC: -4, b2: 0.25, b2Str: '-1/4 x²', xB: 2 },
+          { a: 2, xC: -3, b2: 1, b2Str: '-x²', xB: 1 }
+        ];
+        const c = configs[Math.floor(Math.random() * configs.length)];
+        const yC = c.a * c.xC * c.xC;
+        const yB = c.a * c.xB * c.xB;
+        const yA = -c.b2 * c.xB * c.xB;
+        const base = yB - yA;
+        const height = c.xB - c.xC;
+        const area = 0.5 * base * height;
+
+        currentDrillData = {
+          topic: '放物線と面積',
+          title: '【類題②】上下2つの放物線と比例定数・△ABCの面積',
+          question: `放物線 y = ax² 上に点 C(${c.xC}, ${yC}) がある。また、x座標が ${c.xB} で y軸に平行な線分 AB の両端は、それぞれ y = ax² と y = ${c.b2Str} 上にある。\n(1) a の値と点 B の座標を求めなさい。\n(2) △ABC の面積を求めなさい。`,
+          hint: `まず C(${c.xC}, ${yC}) を y = ax² に代入して a を求めます。底辺は縦の線分 AB、高さは点 C から直線 x = ${c.xB} までの横の距離です。`,
+          answer: `(1) ${yC} = a × (${c.xC})² より a = ${c.a}。x = ${c.xB} を代入して B(${c.xB}, ${yB})。\n(2) 点Aは (${c.xB}, ${yA}) なので、底辺 AB = ${yB} - (${yA}) = ${base}、高さ = ${c.xB} - (${c.xC}) = ${height}。\nよって △ABC = 1/2 × ${base} × ${height} = ${area}`
+        };
+
+        const cx = w / 2, cy = h * 0.65, sx = 36, sy = Math.min(12, (cy - 25) / (Math.max(yC, yB) + 2));
+        drawAxes(ctx, w, h, cx, cy);
+        drawCurve(ctx, w, cx, cy, sx, sy, c.a, '#4f46e5');
+        drawCurve(ctx, w, cx, cy, sx, sy, -c.b2, '#0ea5e9');
+        const pA = { x: cx + c.xB * sx, y: cy - yA * sy };
+        const pB = { x: cx + c.xB * sx, y: cy - yB * sy };
+        const pC = { x: cx + c.xC * sx, y: cy - yC * sy };
+        ctx.fillStyle = 'rgba(244, 63, 94, 0.2)';
+        ctx.strokeStyle = '#e11d48';
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(pA.x, pA.y); ctx.lineTo(pB.x, pB.y); ctx.lineTo(pC.x, pC.y); ctx.closePath();
+        ctx.fill(); ctx.stroke();
+        drawPointLabel(ctx, pA, 'A', 8, 12);
+        drawPointLabel(ctx, pB, 'B', 8, -4);
+        drawPointLabel(ctx, pC, `C(${c.xC}, ${yC})`, -72, -6);
+
+      } else if (chosen === 'p3') {
+        const sets = [
+          { a: 1, x1: -2, x2: 4 },
+          { a: 0.5, x1: -2, x2: 6 },
+          { a: 1, x1: -3, x2: 5 }
+        ];
+        const s = sets[Math.floor(Math.random() * sets.length)];
+        const y1 = s.a * s.x1 * s.x1;
+        const y2 = s.a * s.x2 * s.x2;
+        const m = s.a * (s.x1 + s.x2);
+        const n = -s.a * s.x1 * s.x2;
+        const area = 0.5 * n * (s.x2 - s.x1);
+
+        currentDrillData = {
+          topic: '放物線と直線の融合',
+          title: '【類題③】放物線と直線の交点・△OABの面積',
+          question: `放物線 y = ${s.a === 1 ? '' : '1/2 '}x² と直線が2点 A(${s.x1}, ${y1}), B(${s.x2}, ${y2}) で交わっている。\n(1) 直線 AB の式を求めなさい。\n(2) △OAB の面積を求めなさい。`,
+          hint: `直線ABの傾きは a(p+q) = ${s.a}×(${s.x1}+${s.x2}) で素早く出せます！△OABは y軸の切片で左右2つの三角形に分けて計算します。`,
+          answer: `(1) 傾き = ${m}、切片 = ${n} より、直線の式は y = ${m}x + ${n}。\n(2) y軸との交点(0, ${n})を底辺とすると、△OAB = 1/2 × ${n} × {${s.x2} - (${s.x1})} = ${area}`
+        };
+
+        const cx = w * 0.42, cy = h - 40, sx = 32, sy = Math.min(13, (h - 60) / (y2 + 2));
+        drawAxes(ctx, w, h, cx, cy);
+        drawCurve(ctx, w, cx, cy, sx, sy, s.a, '#4f46e5');
+        const pA = { x: cx + s.x1 * sx, y: cy - y1 * sy };
+        const pB = { x: cx + s.x2 * sx, y: cy - y2 * sy };
+        const pO = { x: cx, y: cy };
+        ctx.fillStyle = 'rgba(16, 185, 129, 0.22)';
+        ctx.strokeStyle = '#059669';
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(pO.x, pO.y); ctx.lineTo(pA.x, pA.y); ctx.lineTo(pB.x, pB.y); ctx.closePath();
+        ctx.fill(); ctx.stroke();
+        drawPointLabel(ctx, pA, `A(${s.x1}, ${y1})`, -68, -6);
+        drawPointLabel(ctx, pB, `B(${s.x2}, ${y2})`, 6, -4);
+
+      } else {
+        const a = [2, -2, 3, -3][Math.floor(Math.random() * 4)];
+        const x1 = -3, x2 = 2;
+        const y1 = a * x1 * x1, y2 = a * x2 * x2;
+        const yMin = a > 0 ? 0 : y1;
+        const yMax = a > 0 ? y1 : 0;
+        const rate = a * (x1 + x2);
+
+        currentDrillData = {
+          topic: '2次関数・変域と変化の割合',
+          title: '【類題④】0をまたぐ変域と変化の割合',
+          question: `関数 y = ${a}x² について、x の変域が ${x1} ≦ x ≦ ${x2} のとき、\n(1) y の変域を求めなさい。\n(2) 変化の割合を求めなさい。`,
+          hint: `x の変域が 0 をまたいでいるので、x = 0 のときの y の値（頂点）が最大値または最小値に入ります！`,
+          answer: `(1) x = 0 のとき y = 0、x = ${x1} のとき y = ${y1} より、${yMin} ≦ y ≦ ${yMax}\n(2) 変化の割合 = ${a} × (${x1} + ${x2}) = ${rate}`
+        };
+
+        const cx = w / 2, cy = h / 2, sx = 36, sy = 7;
+        drawAxes(ctx, w, h, cx, cy);
+        drawCurve(ctx, w, cx, cy, sx, sy, a, '#4f46e5');
+        drawPointLabel(ctx, { x: cx + x1 * sx, y: cy - y1 * sy }, `(${x1}, ${y1})`, -55, 0);
+        drawPointLabel(ctx, { x: cx + x2 * sx, y: cy - y2 * sy }, `(${x2}, ${y2})`, 8, 0);
+      }
+
+      document.getElementById('drillQuestionCard').innerHTML = `
+        <div class="font-bold text-indigo-800">${escapeHtml(currentDrillData.title)}</div>
+        <div class="whitespace-pre-wrap font-medium text-slate-800">${escapeHtml(currentDrillData.question)}</div>
+        <details class="bg-amber-50 border border-amber-200 rounded-lg p-2.5">
+          <summary class="font-bold text-amber-800 text-xs cursor-pointer">💡 解き方のヒントを見る</summary>
+          <p class="mt-1.5 text-xs text-amber-900 whitespace-pre-wrap">${escapeHtml(currentDrillData.hint)}</p>
+        </details>
+        <details class="bg-indigo-50 border border-indigo-200 rounded-lg p-2.5">
+          <summary class="font-bold text-indigo-800 text-xs cursor-pointer">✅ 解答とステップ解説を見る</summary>
+          <p class="mt-1.5 text-xs text-indigo-950 whitespace-pre-wrap">${escapeHtml(currentDrillData.answer)}</p>
+        </details>
+      `;
+    }
+
+    function sendDrillToNotes() {
+      if (!currentDrillData) return;
+      notesData.unshift({
+        id: Date.now(),
+        topic: currentDrillData.topic,
+        type: 'question',
+        text: `${currentDrillData.title}：${currentDrillData.question.replace(/\n/g, ' ')}`,
+        resolved: false,
+        createdAt: new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })
+      });
+      saveNotesStorage();
+      alert('学習メモボードにこの問題を追加しました！');
+    }
+
+    /* ==================== 3. 円周角の定理シミュレーター ==================== */
     let angA = Math.PI * 0.78;
     let angB = Math.PI * 0.22;
     let angP = -Math.PI * 0.55;
@@ -709,11 +1223,8 @@
     function drawCircle() {
       const canvas = document.getElementById('circleCanvas');
       const ctx = canvas.getContext('2d');
-      const w = canvas.width;
-      const h = canvas.height;
-      const cx = w / 2;
-      const cy = h / 2;
-      const r = 165;
+      const w = canvas.width, h = canvas.height;
+      const cx = w / 2, cy = h / 2, r = 165;
 
       ctx.clearRect(0, 0, w, h);
 
@@ -740,21 +1251,18 @@
       document.getElementById('centralAngleVal').textContent = `${centralDeg}°`;
       document.getElementById('inscribedAngleVal').textContent = `${inscribedDeg}°`;
 
-      // 円周
       ctx.strokeStyle = '#94a3b8';
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.arc(cx, cy, r, 0, Math.PI * 2);
       ctx.stroke();
 
-      // 対象の弧ABハイライト
       ctx.strokeStyle = '#f59e0b';
       ctx.lineWidth = 5;
       ctx.beginPath();
       ctx.arc(cx, cy, r, arcStart, arcEnd);
       ctx.stroke();
 
-      // 中心角の扇形
       ctx.fillStyle = 'rgba(245, 158, 11, 0.2)';
       ctx.beginPath();
       ctx.moveTo(cx, cy);
@@ -762,21 +1270,18 @@
       ctx.closePath();
       ctx.fill();
 
-      // 線分 OA, OB
       ctx.strokeStyle = '#d97706';
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.moveTo(A.x, A.y); ctx.lineTo(cx, cy); ctx.lineTo(B.x, B.y);
       ctx.stroke();
 
-      // 線分 PA, PB
       ctx.strokeStyle = '#e11d48';
       ctx.lineWidth = 2.5;
       ctx.beginPath();
       ctx.moveTo(A.x, A.y); ctx.lineTo(P.x, P.y); ctx.lineTo(B.x, B.y);
       ctx.stroke();
 
-      // 補助線（直線POの延長）
       if (document.getElementById('chkAuxLine').checked) {
         const oppX = cx - r * Math.cos(angP);
         const oppY = cy - r * Math.sin(angP);
@@ -790,13 +1295,11 @@
         ctx.setLineDash([]);
       }
 
-      // 中心O
       ctx.fillStyle = '#334155';
       ctx.beginPath(); ctx.arc(cx, cy, 4, 0, Math.PI * 2); ctx.fill();
       ctx.font = 'bold 13px sans-serif';
       ctx.fillText('O', cx - 16, cy - 8);
 
-      // 点A, B, P
       drawControlPoint(ctx, A, 'A', '#4f46e5');
       drawControlPoint(ctx, B, 'B', '#4f46e5');
       drawControlPoint(ctx, P, 'P', '#e11d48');
@@ -867,7 +1370,7 @@
       window.addEventListener('touchend', endDrag);
     }
 
-    /* ==================== 3. 学習メモボード ==================== */
+    /* ==================== 4. 学習メモボード ==================== */
     let notesData = JSON.parse(localStorage.getItem('math_lab_notes') || '[]');
 
     function saveNotesStorage() {
@@ -915,7 +1418,7 @@
     function sendNoteToAi(id) {
       const target = notesData.find(n => n.id === id);
       if (!target) return;
-      const aiTabBtn = document.querySelectorAll('.tab-btn')[3];
+      const aiTabBtn = document.querySelectorAll('.tab-btn')[4];
       switchTab('ai', aiTabBtn);
       document.getElementById('aiQuestionInput').value = `【単元：${target.topic}】\n${target.text}`;
       askGeminiTutor();
@@ -938,11 +1441,11 @@
         <div class="bg-white p-4 rounded-xl shadow-sm border ${n.resolved ? 'border-slate-200 opacity-65' : 'border-indigo-200'} flex flex-col md:flex-row justify-between gap-3">
           <div class="space-y-1.5 flex-1">
             <div class="flex flex-wrap items-center gap-2">
-              <span class="text-xs font-bold px-2 py-0.5 rounded bg-indigo-50 text-indigo-700">${n.topic}</span>
+              <span class="text-xs font-bold px-2 py-0.5 rounded bg-indigo-50 text-indigo-700">${escapeHtml(n.topic)}</span>
               <span class="text-xs font-bold px-2 py-0.5 rounded ${n.type === 'question' ? 'bg-rose-50 text-rose-700' : 'bg-amber-50 text-amber-800'}">
                 ${n.type === 'question' ? '❓ 質問' : '💡 ポイント'}
               </span>
-              <span class="text-xs text-slate-400">${n.createdAt}</span>
+              <span class="text-xs text-slate-400">${escapeHtml(n.createdAt)}</span>
             </div>
             <p class="text-sm font-medium ${n.resolved ? 'line-through text-slate-400' : 'text-slate-800'}">${escapeHtml(n.text)}</p>
           </div>
@@ -975,10 +1478,10 @@
     }
 
     function escapeHtml(str) {
-      return str.replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+      return String(str).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
     }
 
-    /* ==================== 4. Gemini API 連携（現行モデル自動リトライ＆フォールバック） ==================== */
+    /* ==================== 5. Gemini API 連携（現行モデル自動リトライ＆フォールバック） ==================== */
     function updateApiUi() {
       const key = localStorage.getItem('gemini_api_key');
       const dot = document.getElementById('apiStatusDot');
@@ -987,17 +1490,19 @@
 
       if (key) {
         dot.className = 'w-2 h-2 rounded-full bg-emerald-400';
-        text.textContent = 'Gemini API連携中';
+        text.textContent = 'API連携中・自動更新';
         banner.classList.add('hidden');
       } else {
         dot.className = 'w-2 h-2 rounded-full bg-amber-400';
-        text.textContent = 'Gemini API未設定';
+        text.textContent = 'API未設定・自動更新';
         banner.classList.remove('hidden');
       }
     }
 
     function openApiModal() {
       document.getElementById('apiKeyInput').value = localStorage.getItem('gemini_api_key') || '';
+      document.getElementById('ghRepoInput').value = localStorage.getItem('github_repo') || 'trhtiachijp/math-app';
+      document.getElementById('ghTokenInput').value = localStorage.getItem('github_pat') || '';
       document.getElementById('apiModal').classList.remove('hidden');
     }
 
@@ -1009,14 +1514,13 @@
       const val = document.getElementById('apiKeyInput').value.trim();
       if (val) localStorage.setItem('gemini_api_key', val);
       updateApiUi();
-      closeApiModal();
+      alert('Gemini APIキーを保存しました。');
     }
 
     function clearApiKey() {
       localStorage.removeItem('gemini_api_key');
       document.getElementById('apiKeyInput').value = '';
       updateApiUi();
-      closeApiModal();
     }
 
     async function callGemini(promptText) {
@@ -1026,10 +1530,9 @@
         throw new Error('APIキーを設定してください。');
       }
 
-      // 現行モデル優先＋混雑時の自動待機リトライ＆代替モデル切替
       const attempts = [
         { model: 'gemini-3.8-flash', delayMs: 0 },
-        { model: 'gemini-3.8-flash', delayMs: 1500 },
+        { model: 'gemini-3.8-flash', delayMs: 1200 },
         { model: 'gemini-3.5-flash', delayMs: 0 },
         { model: 'gemini-3.5-flash-lite', delayMs: 0 }
       ];
@@ -1055,7 +1558,6 @@
           }
 
           lastError = data.error?.message || `HTTP ${res.status}`;
-          // APIキー自体が無効な場合は次のモデルを試さず即終了
           if (res.status === 400 && /API key/i.test(lastError)) {
             throw new Error(lastError);
           }
@@ -1091,43 +1593,165 @@
       }
     }
 
-    async function generatePracticeProblem() {
+    async function generatePracticeProblem(count = 1) {
       const topic = document.getElementById('genTopic').value;
       const level = document.getElementById('genLevel').value;
-      const btn = document.getElementById('btnGenProblem');
+      const btn1 = document.getElementById('btnGenProblem');
+      const btn3 = document.getElementById('btnGenProblem3');
       const out = document.getElementById('aiProblemOutput');
 
-      btn.disabled = true;
-      btn.textContent = '問題を作成中...';
+      btn1.disabled = true;
+      btn3.disabled = true;
       out.classList.remove('hidden');
-      out.innerHTML = `<div class="p-3 bg-slate-50 rounded-lg text-xs text-slate-500">問題を作成しています...</div>`;
+      out.innerHTML = `<div class="p-3 bg-slate-50 rounded-lg text-xs text-slate-500">問題を作成しています（${count}題）...</div>`;
 
       try {
-        const prompt = `中学3年生の定期テスト対策用に、「${topic}」の練習問題を1題作成してください（難易度：${level}）。
-必ず以下のJSON形式のみで出力してください（Markdownのコードブロック記号は不要です）：
-{"problem":"問題文","hint":"解き方のヒント","answer":"答えと詳しい解説"}`;
+        const prompt = `中学3年生の定期テスト対策用に、「${topic}」の練習問題を${count}題作成してください（難易度：${level}）。
+必ず以下のJSON配列形式のみで出力してください（Markdownのコードブロック記号は不要です）：
+[{"problem":"問題文","hint":"解き方のヒント","answer":"答えと詳しい解説"}]`;
         let raw = await callGemini(prompt);
-        const jsonMatch = raw.match(/\{[\s\S]*\}/);
-        const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : raw.replace(/```json|```/g, '').trim());
+        const arrMatch = raw.match(/\[[\s\S]*\]/);
+        const objMatch = raw.match(/\{[\s\S]*\}/);
+        let list = [];
+        if (arrMatch) {
+          list = JSON.parse(arrMatch[0]);
+        } else if (objMatch) {
+          list = [JSON.parse(objMatch[0])];
+        } else {
+          list = JSON.parse(raw.replace(/```json|```/g, '').trim());
+        }
 
-        out.innerHTML = `
-          <div class="bg-slate-50 border border-slate-200 p-3.5 rounded-xl space-y-2.5 text-sm">
-            <div class="font-bold text-slate-800 whitespace-pre-wrap">${escapeHtml(parsed.problem)}</div>
+        out.innerHTML = list.map((item, idx) => `
+          <div class="bg-slate-50 border border-slate-200 p-3.5 rounded-xl space-y-2 text-sm">
+            <div class="text-xs font-bold text-emerald-700">第 ${idx + 1} 問</div>
+            <div class="font-bold text-slate-800 whitespace-pre-wrap">${escapeHtml(item.problem)}</div>
             <details class="bg-amber-50 border border-amber-200 rounded-lg p-2.5">
               <summary class="font-bold text-amber-800 text-xs cursor-pointer">💡 ヒントを見る</summary>
-              <p class="mt-1.5 text-xs text-amber-900 whitespace-pre-wrap">${escapeHtml(parsed.hint)}</p>
+              <p class="mt-1.5 text-xs text-amber-900 whitespace-pre-wrap">${escapeHtml(item.hint)}</p>
             </details>
             <details class="bg-indigo-50 border border-indigo-200 rounded-lg p-2.5">
               <summary class="font-bold text-indigo-800 text-xs cursor-pointer">✅ 解答と解説を見る</summary>
-              <p class="mt-1.5 text-xs text-indigo-950 whitespace-pre-wrap">${escapeHtml(parsed.answer)}</p>
+              <p class="mt-1.5 text-xs text-indigo-950 whitespace-pre-wrap">${escapeHtml(item.answer)}</p>
             </details>
           </div>
-        `;
+        `).join('');
       } catch (err) {
         out.innerHTML = `<div class="p-3 bg-rose-50 text-rose-700 rounded-lg text-xs">エラー: ${escapeHtml(err.message)}</div>`;
       } finally {
+        btn1.disabled = false;
+        btn3.disabled = false;
+      }
+    }
+
+    /* ==================== 6. GitHub ワンクリック自動更新＆生徒端末の自動最新版チェック ==================== */
+    function saveGithubConfig() {
+      const repo = document.getElementById('ghRepoInput').value.trim() || 'trhtiachijp/math-app';
+      const token = document.getElementById('ghTokenInput').value.trim();
+      localStorage.setItem('github_repo', repo);
+      if (token) localStorage.setItem('github_pat', token);
+      else localStorage.removeItem('github_pat');
+      alert('GitHub設定をブラウザに保存しました。');
+    }
+
+    async function deployToGithub() {
+      const repo = (document.getElementById('ghRepoInput').value.trim() || localStorage.getItem('github_repo') || 'trhtiachijp/math-app');
+      const token = (document.getElementById('ghTokenInput').value.trim() || localStorage.getItem('github_pat'));
+      const newCode = document.getElementById('ghNewCodeInput').value.trim();
+      const statusEl = document.getElementById('ghDeployStatus');
+      const btn = document.getElementById('btnDeployGh');
+
+      if (!token) return alert('GitHub Personal Access Token を入力してください。');
+      if (!newCode || !newCode.includes('</html>')) return alert('新しい index.html のコード全体を貼り付けてください。');
+
+      localStorage.setItem('github_repo', repo);
+      localStorage.setItem('github_pat', token);
+
+      btn.disabled = true;
+      btn.textContent = 'GitHubへ送信中...';
+      statusEl.className = 'text-xs p-2 rounded bg-slate-100 text-slate-700';
+      statusEl.classList.remove('hidden');
+      statusEl.textContent = '現在のファイル情報を取得しています...';
+
+      try {
+        const apiUrl = `https://api.github.com/repos/${repo}/contents/index.html`;
+        const getRes = await fetch(apiUrl, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/vnd.github+json'
+          }
+        });
+        let sha = undefined;
+        if (getRes.ok) {
+          const fileInfo = await getRes.json();
+          sha = fileInfo.sha;
+        }
+
+        const bytes = new TextEncoder().encode(newCode);
+        let binary = '';
+        for (let i = 0; i < bytes.byteLength; i++) {
+          binary += String.fromCharCode(bytes[i]);
+        }
+        const contentBase64 = btoa(binary);
+
+        const putRes = await fetch(apiUrl, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/vnd.github+json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            message: `Auto-update index.html (${new Date().toLocaleString('ja-JP')})`,
+            content: contentBase64,
+            sha: sha
+          })
+        });
+
+        const putData = await putRes.json();
+        if (!putRes.ok) throw new Error(putData.message || 'GitHubへの更新に失敗しました。');
+
+        if (putData.commit?.sha) {
+          localStorage.setItem('math_lab_last_sha', putData.commit.sha);
+        }
+
+        statusEl.className = 'text-xs p-2 rounded bg-emerald-100 text-emerald-900 font-bold';
+        statusEl.textContent = '✅ GitHubへの自動更新が完了しました！1〜2分後に公開サイトへ自動反映されます。';
+        document.getElementById('ghNewCodeInput').value = '';
+      } catch (err) {
+        statusEl.className = 'text-xs p-2 rounded bg-rose-100 text-rose-800 font-bold';
+        statusEl.textContent = '❌ エラー: ' + err.message;
+      } finally {
         btn.disabled = false;
-        btn.textContent = '練習問題を1題作成する';
+        btn.textContent = '🚀 GitHubへ自動更新（コミット）する';
+      }
+    }
+
+    async function checkRemoteUpdate(manual = false) {
+      const repo = localStorage.getItem('github_repo') || 'trhtiachijp/math-app';
+      try {
+        const res = await fetch(`https://api.github.com/repos/${repo}/commits/main`, {
+          headers: { 'Accept': 'application/vnd.github+json' }
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        const latestSha = data.sha;
+        const savedSha = localStorage.getItem('math_lab_last_sha');
+
+        if (!savedSha) {
+          localStorage.setItem('math_lab_last_sha', latestSha);
+          if (manual) alert('現在最新の状態です！');
+          return;
+        }
+
+        if (latestSha && latestSha !== savedSha) {
+          localStorage.setItem('math_lab_last_sha', latestSha);
+          document.getElementById('updateBanner').classList.remove('hidden');
+          setTimeout(() => location.reload(true), 2000);
+        } else if (manual) {
+          alert('すでに最新バージョンです！');
+        }
+      } catch (e) {
+        if (manual) alert('更新確認中に通信エラーが発生しました。');
       }
     }
 
@@ -1136,9 +1760,12 @@
       updateApiUi();
       updateParabola();
       drawMovingScene();
+      updateParaSim();
+      generateAutoDrill();
       setupCircleEvents();
       drawCircle();
       renderNotes();
+      checkRemoteUpdate(false);
     });
   </script>
 </body>
