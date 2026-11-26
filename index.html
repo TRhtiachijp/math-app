@@ -278,7 +278,7 @@
         <div class="bg-white p-4 md:p-5 rounded-xl shadow-sm border border-slate-200 flex flex-col space-y-3">
           <h2 class="text-base font-bold text-slate-800">💬 ステップ解説チューター</h2>
           <p class="text-xs text-slate-500">つまずいている問題や疑問を入力すると、中3生向けに段階的なヒントと解説を作成します。</p>
-          <textarea id="aiQuestionInput" rows="3" placeholder="例：動点Pが辺BC上に移ったときのPCの長さの表し方が分かりません。" class="w-full p-3 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"></textarea>
+          <textarea id="aiQuestionInput" rows="3" placeholder="例：変化の割合がわかりません。" class="w-full p-3 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"></textarea>
           <button onclick="askGeminiTutor()" id="btnAskTutor" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-sm transition">
             AIにステップ解説をお願いする
           </button>
@@ -577,7 +577,7 @@
       const rCtx = rCanvas.getContext('2d');
       rCtx.clearRect(0, 0, rCanvas.width, rCanvas.height);
 
-      const ox = 70, oy = 45, rw = 240, rh = 160; // 1cm = 20px (横12cm=240, 縦8cm=160)
+      const ox = 70, oy = 45, rw = 240, rh = 160;
       const A = { x: ox, y: oy };
       const B = { x: ox, y: oy + rh };
       const C = { x: ox + rw, y: oy + rh };
@@ -630,8 +630,8 @@
       gCtx.clearRect(0, 0, gCanvas.width, gCanvas.height);
 
       const gx0 = 50, gy0 = 235, gw = 310, gh = 195;
-      const sx = gw / 22; // x: 0..20
-      const sy = gh / 55; // y: 0..50
+      const sx = gw / 22;
+      const sy = gh / 55;
 
       // グリッド＆軸
       gCtx.strokeStyle = '#cbd5e1';
@@ -721,7 +721,6 @@
       const B = { x: cx + r * Math.cos(angB), y: cy + r * Math.sin(angB) };
       const P = { x: cx + r * Math.cos(angP), y: cy + r * Math.sin(angP) };
 
-      // 弧ABのどちら側にPがあるかで中心角を正確に算出（常に中心角 = 円周角 × 2）
       const ccwAtoB = normAngle(angB - angA);
       const pInCCW = isAngleBetweenCCW(angP, angA, angB);
       let centralRad, arcStart, arcEnd;
@@ -979,7 +978,7 @@
       return str.replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
     }
 
-    /* ==================== 4. Gemini API 連携 ==================== */
+    /* ==================== 4. Gemini API 連携（自動フォールバック対応） ==================== */
     function updateApiUi() {
       const key = localStorage.getItem('gemini_api_key');
       const dot = document.getElementById('apiStatusDot');
@@ -1026,16 +1025,44 @@
         openApiModal();
         throw new Error('APIキーを設定してください。');
       }
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${encodeURIComponent(apiKey)}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: promptText }] }]
-        })
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error?.message || 'API呼び出しに失敗しました。');
-      return data.candidates?.[0]?.content?.parts?.[0]?.text || '応答が空でした。';
+
+      // 混雑時に自動で代替モデルへ切り替える優先順位リスト
+      const models = [
+        'gemini-3.8-flash',
+        'gemini-2.5-flash',
+        'gemini-2.5-flash-lite'
+      ];
+
+      let lastError = 'API呼び出しに失敗しました。';
+
+      for (const model of models) {
+        try {
+          const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: promptText }] }]
+            })
+          });
+          const data = await res.json();
+
+          if (res.ok) {
+            return data.candidates?.[0]?.content?.parts?.[0]?.text || '応答が空でした。';
+          }
+
+          lastError = data.error?.message || `HTTP ${res.status}`;
+          // APIキー自体が無効な場合は次のモデルを試さず即終了
+          if (res.status === 400 && /API key/i.test(lastError)) {
+            throw new Error(lastError);
+          }
+          // 高負荷(503)・制限(429)・未対応(404)の場合は次のモデルへ自動切替
+        } catch (err) {
+          lastError = err.message || lastError;
+          if (/API key/i.test(lastError)) throw err;
+        }
+      }
+
+      throw new Error(lastError);
     }
 
     async function askGeminiTutor() {
@@ -1077,8 +1104,8 @@
 必ず以下のJSON形式のみで出力してください（Markdownのコードブロック記号は不要です）：
 {"problem":"問題文","hint":"解き方のヒント","answer":"答えと詳しい解説"}`;
         let raw = await callGemini(prompt);
-        raw = raw.replace(/```json|```/g, '').trim();
-        const parsed = JSON.parse(raw);
+        const jsonMatch = raw.match(/\{[\s\S]*\}/);
+        const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : raw.replace(/```json|```/g, '').trim());
 
         out.innerHTML = `
           <div class="bg-slate-50 border border-slate-200 p-3.5 rounded-xl space-y-2.5 text-sm">
