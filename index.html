@@ -978,7 +978,7 @@
       return str.replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
     }
 
-    /* ==================== 4. Gemini API 連携（自動フォールバック対応） ==================== */
+    /* ==================== 4. Gemini API 連携（現行モデル自動リトライ＆フォールバック） ==================== */
     function updateApiUi() {
       const key = localStorage.getItem('gemini_api_key');
       const dot = document.getElementById('apiStatusDot');
@@ -1026,18 +1026,22 @@
         throw new Error('APIキーを設定してください。');
       }
 
-      // 混雑時に自動で代替モデルへ切り替える優先順位リスト
-      const models = [
-        'gemini-3.8-flash',
-        'gemini-2.5-flash',
-        'gemini-2.5-flash-lite'
+      // 現行モデル優先＋混雑時の自動待機リトライ＆代替モデル切替
+      const attempts = [
+        { model: 'gemini-3.8-flash', delayMs: 0 },
+        { model: 'gemini-3.8-flash', delayMs: 1500 },
+        { model: 'gemini-3.5-flash', delayMs: 0 },
+        { model: 'gemini-3.5-flash-lite', delayMs: 0 }
       ];
 
       let lastError = 'API呼び出しに失敗しました。';
 
-      for (const model of models) {
+      for (const attempt of attempts) {
+        if (attempt.delayMs > 0) {
+          await new Promise(resolve => setTimeout(resolve, attempt.delayMs));
+        }
         try {
-          const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`, {
+          const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${attempt.model}:generateContent?key=${encodeURIComponent(apiKey)}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -1055,7 +1059,6 @@
           if (res.status === 400 && /API key/i.test(lastError)) {
             throw new Error(lastError);
           }
-          // 高負荷(503)・制限(429)・未対応(404)の場合は次のモデルへ自動切替
         } catch (err) {
           lastError = err.message || lastError;
           if (/API key/i.test(lastError)) throw err;
