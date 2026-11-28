@@ -62,8 +62,9 @@
       🔷 平行四辺形・ひし形 証明
     </button>
     <button onclick="switchTab('notes', this)" class="tab-btn px-3.5 py-2 rounded-lg font-bold text-sm whitespace-nowrap text-slate-600 hover:bg-slate-100 transition flex items-center gap-1.5">
-      <span>📝 学習メモ</span>
-      <span id="unresolvedBadge" class="hidden bg-rose-500 text-white text-xs px-1.5 py-0.5 rounded-full">0</span>
+      <span>📮 質問箱・回答</span>
+      <span id="unresolvedBadge" title="未回答の質問" class="hidden bg-rose-500 text-white text-xs px-1.5 py-0.5 rounded-full">0</span>
+      <span id="qaUnreadBadge" title="見ていない間に届いた新着" class="hidden bg-amber-400 text-amber-950 text-[10px] px-1.5 py-0.5 rounded-full">新着0</span>
     </button>
     <button onclick="switchTab('ai', this)" class="tab-btn px-3.5 py-2 rounded-lg font-bold text-sm whitespace-nowrap text-slate-600 hover:bg-slate-100 transition flex items-center gap-1.5">
       <span>🤖 AIチューター・全単元類題</span>
@@ -272,7 +273,7 @@
             <div id="drillQuestionCard" class="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-3 text-sm leading-relaxed"></div>
             <div class="flex gap-2">
               <button onclick="sendDrillToNotes()" class="flex-1 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded-lg text-xs transition">
-                📝 この問題を学習メモに保存
+                📮 この問題を質問箱に保存
               </button>
               <button onclick="generateAutoDrill()" class="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-xs transition">
                 次の類題へ進む →
@@ -385,7 +386,7 @@
             <div id="proofDrillCard" class="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-3 text-sm leading-relaxed"></div>
             <div class="flex gap-2">
               <button onclick="sendProofToNotes()" class="flex-1 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded-lg text-xs transition">
-                📝 この問題を学習メモに保存
+                📮 この問題を質問箱に保存
               </button>
               <button onclick="nextProofDrill(1)" class="flex-1 py-2 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-lg text-xs transition">
                 次の問題へ進む →
@@ -396,26 +397,20 @@
       </div>
     </section>
 
-    <!-- ==================== 4. リアルタイム学習メモボード ==================== -->
+    <!-- ==================== 4. 質問箱・質問ログ・回答 ==================== -->
     <section id="notesModule" class="module-view hidden space-y-4">
-      <div class="bg-white p-4 md:p-5 rounded-xl shadow-sm border border-slate-200 space-y-3">
+      <!-- 4-1. 質問箱（投稿エリア） -->
+      <div id="qaPostCard" class="bg-white p-4 md:p-5 rounded-xl shadow-sm border border-indigo-200 space-y-3">
         <div class="flex flex-wrap justify-between items-center gap-2">
           <div>
-            <h2 class="text-lg font-bold text-slate-800">📝 リアルタイム学習メモ・質問ボード</h2>
-            <p id="notesStorageInfo" class="text-[11px] text-slate-400"></p>
+            <h2 class="text-lg font-bold text-slate-800">📮 質問箱</h2>
+            <p class="text-xs text-slate-500">わからない問題を、単元・文章・問題の写真をまとめて投稿します。</p>
           </div>
-          <div class="flex gap-2">
-            <button onclick="copyAllNotes()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-xs transition">
-              📋 すべてコピー
-            </button>
-            <button onclick="exportNotesTxt()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-xs transition">
-              💾 .txt保存
-            </button>
-          </div>
+          <p id="notesStorageInfo" class="text-[11px] text-slate-400"></p>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
-          <select id="noteTopic" class="p-2.5 border border-slate-300 rounded-lg text-sm font-bold bg-slate-50">
+          <select id="noteTopic" class="p-2.5 border border-slate-300 rounded-lg text-sm font-bold bg-slate-50 md:self-start">
             <option value="放物線と面積">単元：放物線と面積</option>
             <option value="2次関数・変域">単元：2次関数・変域</option>
             <option value="動点と面積">単元：動点と面積</option>
@@ -423,21 +418,17 @@
             <option value="相似・三平方">単元：相似・三平方</option>
             <option value="その他">単元：その他</option>
           </select>
-          <select id="noteType" class="p-2.5 border border-slate-300 rounded-lg text-sm font-bold bg-slate-50">
-            <option value="question">❓ 分からない・質問</option>
-            <option value="point">💡 重要ポイント</option>
-          </select>
-          <input type="text" id="noteInput" maxlength="2000" placeholder="分からない問題や気づきを入力..." onkeydown="if(event.key==='Enter' && !event.isComposing) addNote()" class="md:col-span-2 p-2.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+          <textarea id="noteInput" rows="3" maxlength="2000" placeholder="質問を入力（例：問3の△ABE≡△CDFで、錯角がどれかわかりません）&#10;Ctrl+Enter でも投稿できます" onkeydown="if(event.key==='Enter' && (event.ctrlKey || event.metaKey) && !event.isComposing) addNote()" class="md:col-span-3 p-2.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none resize-y"></textarea>
         </div>
 
-        <!-- わからない問題の写真添付 -->
+        <!-- 問題の写真（ファイル選択・カメラ撮影・貼り付け） -->
         <div class="flex flex-wrap items-center gap-2">
           <label for="notePhotoCamera" class="cursor-pointer px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-xs transition">📷 写真を撮る</label>
           <input type="file" id="notePhotoCamera" accept="image/*" capture="environment" class="hidden" onchange="handleNotePhoto(this)">
           <label for="notePhotoFile" class="cursor-pointer px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-xs transition">🖼️ 画像を選ぶ</label>
           <input type="file" id="notePhotoFile" accept="image/*" class="hidden" onchange="handleNotePhoto(this)">
           <button onclick="pastePhotoFromClipboard()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-xs transition">📋 画像を貼り付け</button>
-          <span id="notePhotoStatus" class="text-xs text-slate-500">わからない問題の写真を添付できます（自動で縮小して保存。この画面で Ctrl+V / 長押し→ペーストでも貼り付け可）</span>
+          <span id="notePhotoStatus" class="text-xs text-slate-500">問題の写真を添付できます（自動で縮小。この画面で Ctrl+V / 長押し→ペーストでも貼り付け可）</span>
         </div>
         <div id="notePhotoPreview" class="hidden flex flex-wrap items-start gap-3 bg-slate-50 border border-slate-200 rounded-lg p-2">
           <img id="notePhotoPreviewImg" alt="添付写真のプレビュー" class="max-h-32 max-w-[60%] rounded border border-slate-300 object-contain bg-white">
@@ -454,47 +445,62 @@
             <button id="shareSetupBtn" onclick="openApiModal()" class="hidden text-xs font-bold text-indigo-700 underline">⚙ 共有を設定</button>
           </div>
           <button onclick="addNote()" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-sm shadow-sm transition">
-            ＋ メモを追加
+            📮 質問を投稿
           </button>
         </div>
         <div id="noteSyncStatus" class="text-xs font-bold whitespace-pre-line"></div>
-
-        <!-- Googleカレンダーに復習予定を追加 -->
-        <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100 text-xs">
-          <span class="font-bold text-slate-600">📅 Googleカレンダーに予定を追加：</span>
-          <select id="calTitle" class="p-1.5 border border-slate-300 rounded-lg bg-slate-50 font-bold">
-            <option value="定期テスト（数学）">定期テスト（数学）</option>
-            <option value="復習：2次関数・放物線と面積">復習：2次関数・放物線と面積</option>
-            <option value="復習：平行四辺形・ひし形の合同の証明">復習：平行四辺形・ひし形の証明</option>
-            <option value="unresolved">復習：未解決の学習メモ</option>
-          </select>
-          <input type="date" id="calDate" class="p-1.5 border border-slate-300 rounded-lg bg-slate-50">
-          <button onclick="openCalendarFromWidget()" class="px-3 py-1.5 bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 font-bold rounded-lg transition">📅 カレンダーに追加</button>
-        </div>
       </div>
 
-      <!-- 共有ボード（Google Apps Script 連携・接続している全員の投稿を表示） -->
-      <div id="classBoardCard" class="bg-white p-4 md:p-5 rounded-xl shadow-sm border border-slate-200 space-y-3">
-        <div class="flex flex-wrap justify-between items-center gap-2">
+      <!-- 4-2. 質問ログ（一覧）＋ 4-3. 各質問への回答スレッド -->
+      <div id="qaLogCard" class="bg-white p-4 md:p-5 rounded-xl shadow-sm border border-slate-200 space-y-3">
+        <div class="flex flex-wrap justify-between items-start gap-2">
           <div class="min-w-0">
-            <h3 class="text-base font-bold text-slate-800">🏫 共有ボード（全員・自動更新）</h3>
+            <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+              🗂 質問ログ
+              <span id="qaUnansweredBadge" class="hidden bg-rose-500 text-white text-xs px-2 py-0.5 rounded-full">未回答 0</span>
+            </h3>
             <p id="classBoardStatus" class="text-xs text-slate-500"></p>
           </div>
-          <div id="classBoardControls" class="flex flex-wrap items-center gap-x-3 gap-y-2">
+          <div class="flex gap-2">
+            <button onclick="copyAllNotes()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-xs transition">📋 すべてコピー</button>
+            <button onclick="exportNotesTxt()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-xs transition">💾 .txt保存</button>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap justify-between items-center gap-2">
+          <div id="qaFilterBar" class="flex gap-1 bg-slate-100 p-1 rounded-lg" role="group" aria-label="質問の絞り込み">
+            <button data-filter="all" onclick="setQaFilter('all')" class="qa-filter-btn px-3 py-1.5 rounded-md text-xs font-bold transition">すべて <span id="qaCountAll">0</span></button>
+            <button data-filter="unanswered" onclick="setQaFilter('unanswered')" class="qa-filter-btn px-3 py-1.5 rounded-md text-xs font-bold transition">未回答 <span id="qaCountUnanswered">0</span></button>
+            <button data-filter="answered" onclick="setQaFilter('answered')" class="qa-filter-btn px-3 py-1.5 rounded-md text-xs font-bold transition">回答済み <span id="qaCountAnswered">0</span></button>
+          </div>
+          <div id="classBoardControls" class="flex flex-wrap items-center gap-x-2 gap-y-2">
+            <button id="notifyToggleBtn" onclick="toggleDesktopNotify()" class="px-2.5 py-1.5 border rounded-lg text-xs font-bold transition">🔔 通知OFF</button>
+            <button id="soundToggleBtn" onclick="toggleNotifySound()" class="px-2.5 py-1.5 border rounded-lg text-xs font-bold transition">🔇 音OFF</button>
             <label class="flex items-center gap-1.5 text-xs font-bold text-slate-700 cursor-pointer">
-              <input type="checkbox" id="classAutoChk" checked onchange="setClassAuto(this.checked)" class="w-4 h-4 accent-indigo-600">自動更新（6秒ごと）
+              <input type="checkbox" id="classAutoChk" checked onchange="setClassAuto(this.checked)" class="w-4 h-4 accent-indigo-600">自動更新
             </label>
             <button onclick="refreshClassBoard(true)" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-xs shadow-sm transition">🔄 今すぐ更新</button>
           </div>
         </div>
         <div id="classBoardSetupHint" class="hidden text-xs bg-slate-50 border border-slate-200 rounded-lg p-3 text-slate-600 leading-relaxed">
-          右上の「⚙ 設定」で <strong>共有用 Google Apps Script（GAS）Webアプリ URL</strong> とルームIDを登録すると、「＋ メモを追加」したメモと写真が同じルームの全員の画面に数秒で表示されます。未設定の間は、メモはこの端末にだけ保存されます。
+          右上の「⚙ 設定」で <strong>共有用 Google Apps Script（GAS）Webアプリ URL</strong> とルームIDを登録すると、質問と回答が同じルームの全員の画面に数秒で表示され、新着の通知も届きます。未設定の間は、質問と回答はこの端末にだけ保存されます。
           <button onclick="openApiModal()" class="ml-1 font-bold text-indigo-700 underline">設定を開く</button>
         </div>
-        <div id="classBoardList" class="space-y-2.5"></div>
+        <div id="qaList" class="space-y-3"></div>
       </div>
 
-      <div id="notesList" class="space-y-2.5"></div>
+      <!-- Googleカレンダーに復習予定を追加 -->
+      <div class="bg-white p-3 md:p-4 rounded-xl shadow-sm border border-slate-200 flex flex-wrap items-center gap-2 text-xs">
+        <span class="font-bold text-slate-600">📅 Googleカレンダーに予定を追加：</span>
+        <select id="calTitle" class="p-1.5 border border-slate-300 rounded-lg bg-slate-50 font-bold">
+          <option value="定期テスト（数学）">定期テスト（数学）</option>
+          <option value="復習：2次関数・放物線と面積">復習：2次関数・放物線と面積</option>
+          <option value="復習：平行四辺形・ひし形の合同の証明">復習：平行四辺形・ひし形の証明</option>
+          <option value="unresolved">復習：未解決の質問</option>
+        </select>
+        <input type="date" id="calDate" class="p-1.5 border border-slate-300 rounded-lg bg-slate-50">
+        <button onclick="openCalendarFromWidget()" class="px-3 py-1.5 bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 font-bold rounded-lg transition">📅 カレンダーに追加</button>
+      </div>
     </section>
 
     <!-- ==================== 5. Gemini AI チューター＆全単元問題作成 ==================== -->
@@ -505,12 +511,12 @@
         <span class="inline-block text-xs font-bold bg-amber-100 text-amber-800 px-3 py-1 rounded-full">Coming Soon（準備中）</span>
         <h2 class="text-xl font-bold text-slate-800">AIチューター・類題作成は準備中です</h2>
         <p class="text-sm text-slate-600 leading-relaxed max-w-xl mx-auto">
-          AIによるステップ解説と予想問題の自動作成は、現在一時お休みしています。再開までは下の機能でテスト対策を進めましょう。わからない問題は、学習メモに写真をつけて先生に共有できます。
+          AIによるステップ解説と予想問題の自動作成は、現在一時お休みしています。再開までは下の機能でテスト対策を進めましょう。わからない問題は、質問箱に写真をつけて投稿すると、先生やクラスの人が回答できます。
         </p>
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 max-w-2xl mx-auto">
           <button onclick="goToTab('parabolaArea'); switchParaAreaMode('drill')" class="p-3 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 font-bold rounded-xl text-xs transition">📐 放物線と面積<br>無限類題ドリル</button>
           <button onclick="goToTab('proof'); switchProofMode('drill')" class="p-3 bg-sky-50 hover:bg-sky-100 border border-sky-200 text-sky-800 font-bold rounded-xl text-xs transition">🔷 平行四辺形・ひし形<br>証明演習ドリル</button>
-          <button onclick="goToTab('notes')" class="p-3 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-800 font-bold rounded-xl text-xs transition">📝 わからない問題を<br>写真つきで先生に共有</button>
+          <button onclick="goToTab('notes')" class="p-3 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-800 font-bold rounded-xl text-xs transition">📮 わからない問題を<br>質問箱に投稿</button>
         </div>
       </div>
 
@@ -651,7 +657,21 @@ const SHEET_NAME = 'notes';
 const CHUNK = 45000;        // 1セルの上限（50,000文字）未満に写真を分割して保存
 const MAX_PHOTO = 700000;   // 写真1枚の上限（data URL の文字数）
 const MAX_READ_ROWS = 200;  // 1回の取得で読む最大行数
-const HEADERS = ['receivedAt', 'room', 'uid', 'from', 'topic', 'type', 'text', 'resolved', 'createdAt', 'photoChunks'];
+const API_VERSION = 2;      // 2：質問（question）と回答（answer）に対応
+// 列：A〜J は旧版と同じ。K=entryType（question/answer）、L=parentId（回答先の質問uid）、M以降=写真の分割データ
+// ※旧版で保存した行（K列から写真データ）もそのまま読めます
+const HEADERS = ['receivedAt', 'room', 'uid', 'from', 'topic', 'type', 'text', 'resolved', 'createdAt', 'photoChunks', 'entryType', 'parentId'];
+
+// ===== 任意：新着をメールで通知（ブラウザを閉じていても Gmail に届く） =====
+// 通知を受け取りたいメールアドレスを '' の中に書いて保存し、デプロイを更新してください。空のままなら送信しません。
+//   例：const NOTIFY_EMAIL = 'teacher@example.com';
+// ・初回は「メールの送信」の権限の承認画面が出ます（エディタで testMailNotification を一度実行すると承認できます）。
+// ・無料のGoogleアカウントは1日あたりの送信数に上限（約100通）があります。
+//   NOTIFY_ONLY_QUESTIONS を true にすると質問だけ、NOTIFY_MIN_INTERVAL_SEC で最短の送信間隔（秒）を指定できます。
+// ・メールは本文のみ（写真は添付しません）。生徒の名前や質問内容がメールに載る点に注意してください。
+const NOTIFY_EMAIL = '';
+const NOTIFY_ONLY_QUESTIONS = false;
+const NOTIFY_MIN_INTERVAL_SEC = 60;
 
 function getSheet_() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -680,9 +700,37 @@ function validRoom_(room) {
   return /^[A-Za-z0-9_-]{1,40}$/.test(room);
 }
 
+function validUid_(uid) {
+  return /^[A-Za-z0-9_-]{1,64}$/.test(uid);
+}
+
+// 新しい形式の行は K列が question / answer。旧版の行は K列から写真データ（または空）
+function readRow_(r, seq) {
+  const kind = cell_(r[10]);
+  const v2 = kind === 'question' || kind === 'answer';
+  const photoStart = v2 ? 12 : 10;
+  const parentId = v2 ? cell_(r[11]) : '';
+  const entryType = kind === 'answer' && validUid_(parentId) ? 'answer' : 'question';
+  const chunks = parseInt(cell_(r[9]), 10) || 0;
+  return {
+    seq: seq,
+    receivedAt: cell_(r[0]),
+    uid: cell_(r[2]),
+    entryType: entryType,
+    parentId: entryType === 'answer' ? parentId : '',
+    from: cell_(r[3]),
+    topic: cell_(r[4]),
+    type: cell_(r[5]),
+    text: cell_(r[6]),
+    resolved: cell_(r[7]) === 'true',
+    createdAt: cell_(r[8]),
+    photo: chunks ? r.slice(photoStart, photoStart + chunks).map(cell_).join('') : null
+  };
+}
+
 function doGet(e) {
   const p = (e && e.parameter) || {};
-  if (p.action === 'ping') return json_({ ok: true, app: 'math-lab-share' });
+  if (p.action === 'ping') return json_({ ok: true, app: 'math-lab-share', v: API_VERSION });
   if (p.action !== 'list') return json_({ ok: false, error: 'unknown action' });
 
   const room = str_(p.room, 40);
@@ -701,23 +749,45 @@ function doGet(e) {
       const r = rows[i];
       scanned = since + 1 + i;
       if (cell_(r[1]) !== room) continue;
-      const chunks = parseInt(cell_(r[9]), 10) || 0;
-      notes.push({
-        seq: scanned,
-        receivedAt: cell_(r[0]),
-        uid: cell_(r[2]),
-        from: cell_(r[3]),
-        topic: cell_(r[4]),
-        type: cell_(r[5]),
-        text: cell_(r[6]),
-        resolved: cell_(r[7]) === 'true',
-        createdAt: cell_(r[8]),
-        photo: chunks ? r.slice(10, 10 + chunks).map(cell_).join('') : null
-      });
+      notes.push(readRow_(r, scanned));
       if (notes.length >= limit) break;
     }
   }
-  return json_({ ok: true, notes: notes, last: scanned, total: total, more: scanned < total });
+  return json_({ ok: true, v: API_VERSION, notes: notes, last: scanned, total: total, more: scanned < total });
+}
+
+// 新着をメールで通知（NOTIFY_EMAIL が空なら何もしない。失敗しても投稿は成功扱い）
+function notifyByMail_(room, entryType, n, text, hasPhoto) {
+  if (!NOTIFY_EMAIL) return;
+  if (NOTIFY_ONLY_QUESTIONS && entryType === 'answer') return;
+  try {
+    const cache = CacheService.getScriptCache();
+    if (NOTIFY_MIN_INTERVAL_SEC > 0) {
+      if (cache.get('mailSentRecently')) return;
+      cache.put('mailSentRecently', '1', Math.max(1, Math.min(21600, NOTIFY_MIN_INTERVAL_SEC)));
+    }
+    const kind = entryType === 'answer' ? '新しい回答' : '新しい質問';
+    const subject = '[数学Lab] ' + kind + '（' + str_(n.topic, 40) + '）';
+    const body = [
+      'ルーム：' + room,
+      '種類：' + kind,
+      '名前：' + (str_(n.from, 30) || '名前なし'),
+      '単元：' + str_(n.topic, 40),
+      '',
+      text.slice(0, 500) + (hasPhoto ? '\n[写真あり]' : ''),
+      '',
+      '※アプリの「📮 質問箱・回答」タブで確認してください。'
+    ].join('\n');
+    MailApp.sendEmail(NOTIFY_EMAIL, subject, body); // プレーンテキストで送信
+  } catch (err) {
+    console.warn('mail notify failed: ' + err);
+  }
+}
+
+// エディタでこの関数を一度実行すると、メール送信の権限を承認できます（テストメールが届きます）
+function testMailNotification() {
+  if (!NOTIFY_EMAIL) throw new Error('NOTIFY_EMAIL にメールアドレスを設定してください');
+  MailApp.sendEmail(NOTIFY_EMAIL, '[数学Lab] メール通知のテスト', '新着の質問・回答がこのアドレスに通知されます。');
 }
 
 function doPost(e) {
@@ -737,12 +807,17 @@ function doPost(e) {
       return json_({ ok: false, error: 'invalid photo' });
     }
     if (!text && !photo) return json_({ ok: false, error: 'empty note' });
+    const parentId = str_(n.parentId, 64);
+    const entryType = n.entryType === 'answer' ? 'answer' : 'question';
+    if (entryType === 'answer' && (!validUid_(parentId) || parentId === uid)) {
+      return json_({ ok: false, error: 'invalid parentId' });
+    }
 
     lock.waitLock(10000);
     const sh = getSheet_();
     const found = sh.getRange(1, 3, Math.max(1, sh.getLastRow()), 1)
       .createTextFinder(uid).matchEntireCell(true).findNext();
-    if (found) return json_({ ok: true, duplicate: true, seq: found.getRow() });
+    if (found) return json_({ ok: true, v: API_VERSION, duplicate: true, seq: found.getRow() });
 
     const chunks = [];
     for (let i = 0; i < photo.length; i += CHUNK) chunks.push(photo.slice(i, i + CHUNK));
@@ -750,11 +825,13 @@ function doPost(e) {
     const values = [
       new Date().toISOString(), room, uid, str_(n.from, 30), str_(n.topic, 40),
       n.type === 'point' ? 'point' : 'question', text, n.resolved === true ? 'true' : 'false',
-      str_(n.createdAt, 40), String(chunks.length)
+      str_(n.createdAt, 40), String(chunks.length), entryType, entryType === 'answer' ? parentId : ''
     ].concat(chunks).map(function (v) { return "'" + v; });
     const row = sh.getLastRow() + 1;
     sh.getRange(row, 1, 1, values.length).setValues([values]);
-    return json_({ ok: true, seq: row });
+    try { lock.releaseLock(); } catch (e) {}
+    notifyByMail_(room, entryType, n, text, !!photo);
+    return json_({ ok: true, v: API_VERSION, seq: row });
   } catch (err) {
     return json_({ ok: false, error: str_(err && err.message ? err.message : err, 200) });
   } finally {
@@ -788,6 +865,8 @@ function doPost(e) {
         drawProofSim();
         renderProofDrill();
       } else if (tabId === 'notes') {
+        if (qaRenderPending) renderQA();
+        markQaSeen();
         refreshClassBoard(false);
       }
       checkRemoteUpdate(false);
@@ -1463,7 +1542,7 @@ function doPost(e) {
         type: 'question',
         text: `${currentDrillData.title}：${currentDrillData.question.replace(/\n/g, ' ')}`
       });
-      if (ok) alert('学習メモボードにこの問題を追加しました！');
+      if (ok) alert('質問ログにこの問題を追加しました！（この端末に保存。共有するには質問の「再送」ボタンを押してください）');
     }
 
     /* ==================== 3. 平行四辺形・ひし形 合同の証明 ==================== */
@@ -2016,21 +2095,36 @@ function doPost(e) {
         type: 'question',
         text: `${item.title}：${item.question.replace(/\n/g, ' ')}`
       });
-      if (ok) alert('学習メモボードにこの問題を追加しました！');
+      if (ok) alert('質問ログにこの問題を追加しました！（この端末に保存。共有するには質問の「再送」ボタンを押してください）');
     }
 
-    /* ==================== 4. 学習メモボード ==================== */
+    /* ==================== 4. 質問箱・質問ログ・回答 ==================== */
+    // 質問と回答は同じ形のデータで保存し、entryType（question / answer）と parentId（回答先の質問の uid）で区別する。
+    // parentId が空の過去のメモはすべて「質問」として扱う（後方互換）。
     const NOTES_KEY = 'math_lab_notes';
     const STUDENT_NAME_KEY = 'math_lab_student_name';
+    const QA_RESOLVED_KEY = 'math_lab_qa_resolved'; // 他の人の質問に付けた「解決済み」（この端末だけの印）
+    const QA_FILTER_KEY = 'math_lab_qa_filter';
     const MAX_PHOTO_CHARS = 700000;   // 写真1枚あたりの data URL 上限（約500KB）
     const TARGET_PHOTO_CHARS = 300000; // 圧縮の目標サイズ（約220KB）
+    const UID_RE = /^[A-Za-z0-9_-]{1,64}$/;
+    const PHOTO_HINT = '問題の写真を添付できます（自動で縮小。この画面で Ctrl+V / 長押し→ペーストでも貼り付け可）';
     let pendingNotePhoto = null;
     let lastNoteId = 0;
+    const answerDrafts = {};          // 質問uid → { text, photo, status }（書きかけの回答。画面を描き直しても消えない）
+    const openAnswerForms = new Set(); // 回答フォームを開いている質問の uid
+    let qaFilter = 'all';
+    let qaComposing = false;          // 日本語入力の変換中は一覧を描き直さない
+    let qaRenderPending = false;
 
-    // 画像は data:image/(jpeg|png|webp);base64 のみ許可（javascript: 等を排除）
+    // 画像は data:image/(jpeg|png|webp);base64 のみ許可（javascript: や SVG 等を排除）
     function isSafeImageDataUrl(s) {
       return typeof s === 'string' && s.length <= MAX_PHOTO_CHARS &&
         /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/]+={0,2}$/.test(s);
+    }
+
+    function isValidUid(uid) {
+      return typeof uid === 'string' && UID_RE.test(uid);
     }
 
     function nextNoteId() {
@@ -2058,26 +2152,31 @@ function doPost(e) {
       const text = String(raw.text ?? '').trim().slice(0, 2000);
       const photo = isSafeImageDataUrl(raw.photo) ? raw.photo : null;
       if (!text && !photo) return null;
+      const parentId = isValidUid(raw.parentId) ? raw.parentId : '';
+      const entryType = raw.entryType === 'answer' && parentId ? 'answer' : 'question';
       const note = {
         id: keepId && Number.isSafeInteger(raw.id) && raw.id > 0 ? raw.id : nextNoteId(),
         uid: '',
+        entryType,
+        parentId: entryType === 'answer' ? parentId : '',
         topic: String(raw.topic ?? 'その他').slice(0, 40) || 'その他',
         type: raw.type === 'point' ? 'point' : 'question',
-        text: text || '（写真の問題）',
+        text: text || (entryType === 'answer' ? '（写真の解説）' : '（写真の問題）'),
         resolved: raw.resolved === true,
         createdAt: String(raw.createdAt ?? '').slice(0, 40),
         from: String(raw.from ?? '').trim().slice(0, 30),
         photo
       };
-      // クラス共有への送信状態は自分の端末のメモだけが持つ
+      // 共有ボードへの送信状態は自分の端末のメモだけが持つ
       if (keepId && typeof raw.synced === 'boolean') note.synced = raw.synced;
-      if (typeof raw.uid === 'string' && /^[A-Za-z0-9_-]{1,64}$/.test(raw.uid)) {
+      if (isValidUid(raw.uid)) {
         note.uid = raw.uid;
       } else if (keepId && Number.isSafeInteger(raw.id)) {
         note.uid = 'legacy-' + raw.id;
       } else {
         note.uid = 'h-' + hashText(`${note.from}|${note.createdAt}|${note.topic}|${note.text}`);
       }
+      if (note.parentId === note.uid) { note.entryType = 'question'; note.parentId = ''; }
       return note;
     }
 
@@ -2116,7 +2215,7 @@ function doPost(e) {
       if (saveNotesStorage()) return true;
       notesData = prev;
       saveNotesStorage();
-      alert(failMsg || '端末の保存容量が足りないため保存できませんでした。写真つきの古いメモや解決済みのメモを削除してから、もう一度お試しください。');
+      alert(failMsg || '端末の保存容量が足りないため保存できませんでした。写真つきの古い質問や解決済みの質問を削除してから、もう一度お試しください。');
       return false;
     }
 
@@ -2125,6 +2224,8 @@ function doPost(e) {
       notesData.unshift({
         id: nextNoteId(),
         uid: makeNoteUid(),
+        entryType: 'question',
+        parentId: '',
         topic: 'その他',
         type: 'question',
         resolved: false,
@@ -2136,14 +2237,16 @@ function doPost(e) {
       return commitNotes(prev);
     }
 
+    // 質問箱の「📮 質問を投稿」：先に端末へ保存し、共有URLがあれば全員へ自動送信
     function addNote() {
       const input = document.getElementById('noteInput');
       const text = input.value.trim();
-      if (!text && !pendingNotePhoto) return alert('メモの内容を入力するか、写真を添付してください。');
+      if (!text && !pendingNotePhoto) return alert('質問の内容を入力するか、問題の写真を添付してください。');
 
       const ok = addNoteRecord({
+        entryType: 'question',
         topic: document.getElementById('noteTopic').value,
-        type: document.getElementById('noteType').value,
+        type: 'question',
         text: text || '（写真の問題）',
         photo: pendingNotePhoto
       });
@@ -2151,7 +2254,6 @@ function doPost(e) {
         const saved = notesData[0];
         input.value = '';
         clearNotePhoto();
-        // ローカル保存が済んだら、共有URLが設定されていれば全員へ自動送信（失敗してもメモは残る）
         if (getGasConfig().url) {
           saveAuthorName();
           syncNoteToClass(saved.id);
@@ -2166,15 +2268,43 @@ function doPost(e) {
       saveNotesStorage();
     }
 
+    function loadResolvedSet() {
+      try {
+        const arr = JSON.parse(lsGet(QA_RESOLVED_KEY) || '[]');
+        return new Set(Array.isArray(arr) ? arr.filter(isValidUid) : []);
+      } catch (e) {
+        return new Set();
+      }
+    }
+
+    // 解決済みトグル：自分の端末の質問はメモ自体に、他の人の質問はこの端末の印として保存
+    function toggleQuestionResolved(uid) {
+      if (!isValidUid(uid)) return;
+      const local = notesData.find(n => n.uid === uid && n.entryType !== 'answer');
+      if (local) return toggleNoteResolved(local.id);
+      const set = loadResolvedSet();
+      if (set.has(uid)) set.delete(uid); else set.add(uid);
+      lsSet(QA_RESOLVED_KEY, set.size ? JSON.stringify(Array.from(set).slice(-500)) : '');
+      renderQA();
+    }
+
     function deleteNote(id) {
-      notesData = notesData.filter(n => n.id !== id);
+      const target = notesData.find(n => n.id === id);
+      if (!target) return;
+      const msg = target.synced === true
+        ? 'この端末から削除しますか？\n（共有ボードに送信済みのため、他の人の画面からは消えません）'
+        : 'この端末から削除しますか？';
+      if (!confirm(msg)) return;
+      // 共有ボードにない質問を消すときは、この端末にあるその質問への回答もいっしょに消す
+      const cascade = target.entryType === 'question' && !classNotes.some(c => c.uid === target.uid);
+      notesData = notesData.filter(n => n.id !== id && !(cascade && n.entryType === 'answer' && n.parentId === target.uid));
       saveNotesStorage();
     }
 
     function editNoteText(id) {
       const target = notesData.find(n => n.id === id);
       if (!target) return;
-      const updated = prompt('メモ内容を編集してください：', target.text);
+      const updated = prompt('内容を編集してください（この端末の表示だけが変わります）：', target.text);
       if (updated !== null && updated.trim() !== '') {
         target.text = updated.trim().slice(0, 2000);
         saveNotesStorage();
@@ -2185,7 +2315,7 @@ function doPost(e) {
       const target = notesData.find(n => n.id === id);
       if (!target) return;
       if (!AI_TUTOR_ENABLED) {
-        alert('AI解説は現在準備中（Coming Soon）です。\nわからない問題は、写真をつけて「＋ メモを追加」すると共有ボードで先生やクラスに共有できます（⚙ 設定で共有URLの登録が必要です）。');
+        alert('AI解説は現在準備中（Coming Soon）です。\nわからない問題は、写真をつけて質問箱に投稿すると、先生やクラスの人が「💬 回答を書く」で答えてくれます（⚙ 設定で共有URLの登録が必要です）。');
         return;
       }
       goToTab('ai');
@@ -2223,20 +2353,37 @@ function doPost(e) {
       return canvas.toDataURL('image/jpeg', quality);
     }
 
+    function photoSizeLabel(dataUrl) {
+      return `縮小後 約${Math.round(dataUrl.length * 0.75 / 1024)}KB`;
+    }
+
     async function handleNotePhoto(inputEl) {
       const file = inputEl.files && inputEl.files[0];
       inputEl.value = ''; // 同じ写真を選び直せるようにする
       if (!file) return;
-      await processPhotoFile(file);
+      await processPhotoFile(file, 'q');
+    }
+
+    async function handleAnswerPhoto(inputEl, uid) {
+      const file = inputEl.files && inputEl.files[0];
+      inputEl.value = '';
+      if (!file || !isValidUid(uid)) return;
+      await processPhotoFile(file, uid);
     }
 
     // ファイル選択・カメラ撮影・貼り付けの共通処理（Canvasで縮小・JPEG圧縮）
-    async function processPhotoFile(file) {
+    // target：'q' は質問箱、それ以外は回答フォーム（回答先の質問 uid）
+    async function processPhotoFile(file, target) {
+      const dest = target && target !== 'q' && isValidUid(target) ? target : 'q';
       if (file.type && !file.type.startsWith('image/')) return alert('画像ファイルを選んでください。');
       if (file.size > 30 * 1024 * 1024) return alert('画像が大きすぎます（30MBまで）。');
 
-      const status = document.getElementById('notePhotoStatus');
-      status.textContent = '写真を縮小しています...';
+      if (dest === 'q') {
+        document.getElementById('notePhotoStatus').textContent = '写真を縮小しています...';
+      } else {
+        getDraft(dest).status = '写真を縮小しています...';
+        renderQA();
+      }
       try {
         const img = await loadImageFromFile(file);
         let dataUrl = null;
@@ -2246,13 +2393,21 @@ function doPost(e) {
         }
         if (!isSafeImageDataUrl(dataUrl)) throw new Error('写真の圧縮に失敗しました。別の写真でお試しください。');
 
-        pendingNotePhoto = dataUrl;
-        document.getElementById('notePhotoPreviewImg').src = dataUrl;
-        document.getElementById('notePhotoInfo').textContent = `縮小後 約${Math.round(dataUrl.length * 0.75 / 1024)}KB`;
-        document.getElementById('notePhotoPreview').classList.remove('hidden');
-        status.textContent = '写真を添付しました（「＋ メモを追加」で保存されます）';
+        if (dest === 'q') {
+          pendingNotePhoto = dataUrl;
+          document.getElementById('notePhotoPreviewImg').src = dataUrl;
+          document.getElementById('notePhotoInfo').textContent = photoSizeLabel(dataUrl);
+          document.getElementById('notePhotoPreview').classList.remove('hidden');
+          document.getElementById('notePhotoStatus').textContent = '写真を添付しました（「📮 質問を投稿」で保存されます）';
+        } else {
+          const d = getDraft(dest);
+          d.photo = dataUrl;
+          d.status = photoSizeLabel(dataUrl);
+          openAnswerForms.add(dest);
+          renderQA();
+        }
       } catch (err) {
-        clearNotePhoto();
+        if (dest === 'q') clearNotePhoto(); else clearAnswerPhoto(dest);
         alert(err.message || '写真を読み込めませんでした。');
       }
     }
@@ -2262,12 +2417,12 @@ function doPost(e) {
       document.getElementById('notePhotoPreview').classList.add('hidden');
       document.getElementById('notePhotoPreviewImg').removeAttribute('src');
       document.getElementById('notePhotoInfo').textContent = '';
-      document.getElementById('notePhotoStatus').textContent = 'わからない問題の写真を添付できます（自動で縮小して保存。この画面で Ctrl+V / 長押し→ペーストでも貼り付け可）';
+      document.getElementById('notePhotoStatus').textContent = PHOTO_HINT;
     }
 
     // 「📋 画像を貼り付け」ボタン（Async Clipboard API / ClipboardItem）
-    async function pastePhotoFromClipboard() {
-      const fallbackMsg = 'このブラウザではボタンから画像を読み取れませんでした。\n画像をコピーしてから、この画面で Ctrl+V（スマホ・iPadはメモ入力欄を長押し→「ペースト」）で貼り付けてください。';
+    async function pastePhotoFromClipboard(target) {
+      const fallbackMsg = 'このブラウザではボタンから画像を読み取れませんでした。\n画像をコピーしてから、この画面で Ctrl+V（スマホ・iPadは入力欄を長押し→「ペースト」）で貼り付けてください。';
       if (!navigator.clipboard || !navigator.clipboard.read) return alert(fallbackMsg);
       try {
         const items = await navigator.clipboard.read();
@@ -2275,7 +2430,7 @@ function doPost(e) {
           const type = item.types.find(t => t.startsWith('image/'));
           if (type) {
             const blob = await item.getType(type);
-            await processPhotoFile(new File([blob], 'pasted-image', { type }));
+            await processPhotoFile(new File([blob], 'pasted-image', { type }), target || 'q');
             return;
           }
         }
@@ -2285,20 +2440,23 @@ function doPost(e) {
       }
     }
 
-    // Ctrl+V / ペーストで画像を添付（学習メモ画面を表示中のみ。テキストの貼り付けは邪魔しない）
+    // Ctrl+V / ペーストで画像を添付（質問箱画面を表示中のみ。テキストの貼り付けは邪魔しない）
+    // 回答フォームの中で貼り付けたら回答に、それ以外は質問箱に添付する
     document.addEventListener('paste', (e) => {
-      const notesView = document.getElementById('notesModule');
-      if (!notesView || notesView.classList.contains('hidden')) return;
+      if (!isQaTabOpen()) return;
       const target = e.target instanceof Element ? e.target : null;
       const field = target && target.closest('input, textarea');
-      if (field && field.id !== 'noteInput') return;
+      const form = target && target.closest('[data-ans-form]');
+      let dest = 'q';
+      if (form && isValidUid(form.getAttribute('data-ans-form'))) dest = form.getAttribute('data-ans-form');
+      else if (field && field.id !== 'noteInput') return;
       const items = (e.clipboardData && e.clipboardData.items) ? Array.from(e.clipboardData.items) : [];
       const imageItem = items.find(it => it.kind === 'file' && it.type.startsWith('image/'));
       if (!imageItem) return;
       const file = imageItem.getAsFile();
       if (!file) return;
       e.preventDefault();
-      processPhotoFile(file);
+      processPhotoFile(file, dest);
     });
 
     function openPhotoViewer(id) {
@@ -2318,77 +2476,315 @@ function doPost(e) {
       if (e.key === 'Escape') closePhotoViewer();
     });
 
+    /* ---------- 回答フォーム ---------- */
+    function getDraft(uid) {
+      return answerDrafts[uid] || (answerDrafts[uid] = { text: '', photo: null, status: '' });
+    }
+
+    function toggleAnswerForm(uid) {
+      if (!isValidUid(uid)) return;
+      if (openAnswerForms.has(uid)) openAnswerForms.delete(uid); else openAnswerForms.add(uid);
+      qaComposing = false;
+      renderQA();
+      if (openAnswerForms.has(uid)) {
+        const ta = document.querySelector(`textarea[data-ans-uid="${uid}"]`);
+        if (ta) ta.focus();
+      }
+    }
+
+    function onAnswerInput(uid, el) {
+      if (isValidUid(uid)) getDraft(uid).text = String(el.value).slice(0, 2000);
+    }
+
+    function onAnswerCompositionEnd(uid, el) {
+      qaComposing = false;
+      onAnswerInput(uid, el);
+      if (qaRenderPending) renderQA();
+    }
+
+    function clearAnswerPhoto(uid) {
+      if (!isValidUid(uid)) return;
+      const d = getDraft(uid);
+      d.photo = null;
+      d.status = '';
+      renderQA();
+    }
+
+    function pasteAnswerPhoto(uid) {
+      if (isValidUid(uid)) pastePhotoFromClipboard(uid);
+    }
+
+    function findQuestionEntry(uid) {
+      return notesData.find(n => n.uid === uid && n.entryType !== 'answer') ||
+        classNotes.find(n => n.uid === uid && n.entryType !== 'answer') || null;
+    }
+
+    // 「💬 回答を送信」：先に端末へ保存し、共有URLがあれば全員へ自動送信
+    function submitAnswer(uid) {
+      if (!isValidUid(uid)) return;
+      const q = findQuestionEntry(uid);
+      if (!q) return alert('回答先の質問が見つかりませんでした。');
+      const d = getDraft(uid);
+      const text = d.text.trim();
+      if (!text && !d.photo) return alert('回答を入力するか、解説の写真を添付してください。');
+      qaComposing = false;
+      const ok = addNoteRecord({
+        entryType: 'answer',
+        parentId: uid,
+        topic: q.topic,
+        type: 'question',
+        text: text || '（写真の解説）',
+        photo: d.photo
+      });
+      if (!ok) return;
+      const saved = notesData[0];
+      delete answerDrafts[uid];
+      openAnswerForms.delete(uid);
+      if (getGasConfig().url) {
+        saveAuthorName();
+        syncNoteToClass(saved.id);
+      } else {
+        renderQA();
+      }
+    }
+
+    /* ---------- 質問ログ（端末のメモと共有ボードを uid でまとめて表示） ---------- */
+    function ownUidSet() {
+      return new Set(notesData.filter(n => !n.from).map(n => n.uid));
+    }
+
+    function buildQaModel() {
+      const items = new Map();
+      classNotes.forEach(c => items.set(c.uid, { e: c, board: c, local: false, key: Date.parse(c.receivedAt) || c.seq || 0 }));
+      notesData.forEach(n => {
+        const b = items.get(n.uid) || null;
+        items.set(n.uid, { e: n, board: b, local: true, key: n.id });
+      });
+      const questions = [];
+      const answersBy = new Map();
+      items.forEach(it => {
+        if (it.e.entryType === 'answer') {
+          if (!answersBy.has(it.e.parentId)) answersBy.set(it.e.parentId, []);
+          answersBy.get(it.e.parentId).push(it);
+        } else {
+          questions.push(it);
+        }
+      });
+      const resolvedSet = loadResolvedSet();
+      questions.forEach(q => {
+        q.answers = (answersBy.get(q.e.uid) || []).sort((a, b) => a.key - b.key);
+        q.resolved = q.local ? q.e.resolved === true : resolvedSet.has(q.e.uid);
+        q.status = q.e.type === 'point' ? 'memo' : (q.answers.length || q.resolved) ? 'answered' : 'unanswered';
+      });
+      questions.sort((a, b) => b.key - a.key);
+      return questions;
+    }
+
+    function setQaFilter(f) {
+      qaFilter = ['all', 'unanswered', 'answered'].includes(f) ? f : 'all';
+      lsSet(QA_FILTER_KEY, qaFilter === 'all' ? '' : qaFilter);
+      renderQA();
+    }
+
     function renderNotes() {
-      const list = document.getElementById('notesList');
-      const badge = document.getElementById('unresolvedBadge');
-      const unresolvedCount = notesData.filter(n => !n.resolved).length;
-
-      badge.textContent = unresolvedCount;
-      badge.classList.toggle('hidden', unresolvedCount === 0);
-
       const usedKB = Math.round(JSON.stringify(notesData).length / 1024);
       const info = document.getElementById('notesStorageInfo');
       if (info) info.textContent = `この端末の保存量：約${usedKB}KB（目安の上限 約5MB）`;
+      renderQA();
+    }
 
-      if (notesData.length === 0) {
-        list.innerHTML = `<div class="bg-white p-8 rounded-xl border border-dashed border-slate-300 text-center text-sm text-slate-400">まだメモはありません。授業中の疑問や重要ポイントを上から追加してください。</div>`;
+    // 送信状態（自分の端末で書いた質問・回答だけ）
+    function syncBadge(n, gasOn) {
+      if (n.from) return '';
+      if (syncingIds.has(n.id)) return `<span class="px-2 py-1 text-xs font-bold text-slate-600 bg-slate-100 rounded-lg">⏳ 送信中</span>`;
+      if (n.synced === true) return `<span class="px-2 py-1 text-xs font-bold text-sky-700 bg-sky-50 rounded-lg">☁ 全員へ共有済</span>`;
+      if (!gasOn) return `<span class="px-2 py-1 text-xs font-bold text-slate-500 bg-slate-50 rounded-lg" title="⚙ 設定で共有URLを登録すると全員に共有されます">📱 ローカル保存のみ</span>`;
+      return `<button onclick="syncNoteToClass(${n.id})" title="${n.synced === false ? '送信に失敗しました。押すと送り直します' : 'まだ共有されていません'}" class="px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 font-bold rounded-lg text-xs transition">⚠ ローカル保存のみ（${n.synced === false ? '未送信' : '未共有'}）・再送</button>`;
+    }
+
+    function photoThumb(n, alt, cls) {
+      if (!isSafeImageDataUrl(n.photo)) return '';
+      return `
+              <button onclick="openPhotoViewer(${n.id})" class="inline-flex flex-col items-start gap-0.5" title="タップで拡大">
+                <img src="${escapeHtml(n.photo)}" alt="${escapeHtml(alt)}" class="${cls} object-cover rounded-lg border border-slate-300 hover:opacity-90">
+                <span class="text-[11px] text-slate-500">🔍 タップで拡大</span>
+              </button>`;
+    }
+
+    function renderAnswerItem(a, ctx) {
+      const n = a.e;
+      const mine = a.local && !n.from;
+      const isNew = !mine && a.board && a.board.newUntil > ctx.now;
+      const from = (a.board && a.board.from) || n.from;
+      return `
+            <div class="rounded-lg p-2.5 space-y-1.5 border ${isNew ? 'border-emerald-400 bg-emerald-50' : 'border-emerald-100 bg-emerald-50/50'}">
+              <div class="flex flex-wrap items-center gap-1.5">
+                ${isNew ? '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-600 text-white">NEW</span>' : ''}
+                <span class="text-[11px] font-bold px-1.5 py-0.5 rounded bg-emerald-600/10 text-emerald-800">💬 回答</span>
+                ${mine ? '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-600 text-white">あなた</span>' : ''}
+                ${from ? `<span class="text-xs font-bold text-sky-800">👤 ${escapeHtml(from)}</span>` : (mine ? '' : '<span class="text-xs font-bold text-sky-800">👤 名前なし</span>')}
+                <span class="text-[11px] text-slate-400">${escapeHtml(n.createdAt)}</span>
+              </div>
+              <p class="text-sm text-slate-800 break-words whitespace-pre-wrap">${escapeHtml(n.text)}</p>
+              ${photoThumb(n, '解説の写真', 'h-24 max-w-[200px]')}
+              ${a.local ? `
+              <div class="flex flex-wrap items-center gap-1.5">
+                ${syncBadge(n, ctx.gasOn)}
+                <button onclick="deleteNote(${n.id})" class="px-2 py-1 text-rose-500 hover:bg-rose-50 font-bold rounded-lg text-xs transition">削除</button>
+              </div>` : ''}
+            </div>`;
+    }
+
+    function renderAnswerForm(uid) {
+      const d = getDraft(uid);
+      return `
+            <div data-ans-form="${uid}" class="bg-white border border-emerald-300 rounded-lg p-2.5 space-y-2">
+              <textarea data-ans-uid="${uid}" rows="3" maxlength="2000" placeholder="回答・解説を入力...（Ctrl+Enter で送信）" oninput="onAnswerInput('${uid}', this)" oncompositionstart="qaComposing = true" oncompositionend="onAnswerCompositionEnd('${uid}', this)" onkeydown="if(event.key==='Enter' && (event.ctrlKey || event.metaKey) && !event.isComposing) submitAnswer('${uid}')" class="w-full p-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 outline-none resize-y">${escapeHtml(d.text)}</textarea>
+              <div class="flex flex-wrap items-center gap-1.5">
+                <label for="ansCam-${uid}" class="cursor-pointer px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-xs transition">📷 撮る</label>
+                <input type="file" id="ansCam-${uid}" accept="image/*" capture="environment" class="hidden" onchange="handleAnswerPhoto(this, '${uid}')">
+                <label for="ansFile-${uid}" class="cursor-pointer px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-xs transition">🖼️ 画像</label>
+                <input type="file" id="ansFile-${uid}" accept="image/*" class="hidden" onchange="handleAnswerPhoto(this, '${uid}')">
+                <button onclick="pasteAnswerPhoto('${uid}')" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-xs transition">📋 貼り付け</button>
+                <span class="text-[11px] text-slate-500">${escapeHtml(d.status || '解説の写真も添付できます')}</span>
+              </div>
+              ${isSafeImageDataUrl(d.photo) ? `
+              <div class="flex items-start gap-2">
+                <img src="${escapeHtml(d.photo)}" alt="解説写真のプレビュー" class="max-h-24 max-w-[50%] rounded border border-slate-300 object-contain bg-white">
+                <button onclick="clearAnswerPhoto('${uid}')" class="px-2 py-1 text-xs font-bold text-rose-600 hover:bg-rose-50 rounded transition">✕ 写真を削除</button>
+              </div>` : ''}
+              <div class="flex justify-end gap-2">
+                <button onclick="toggleAnswerForm('${uid}')" class="px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-lg">キャンセル</button>
+                <button onclick="submitAnswer('${uid}')" class="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-xs shadow-sm transition">💬 回答を送信</button>
+              </div>
+            </div>`;
+    }
+
+    function renderQuestionCard(q, ctx) {
+      const n = q.e;
+      const uid = isValidUid(n.uid) ? n.uid : '';
+      if (!uid) return '';
+      const mine = q.local && !n.from;
+      const isNew = !mine && q.board && q.board.newUntil > ctx.now;
+      const from = (q.board && q.board.from) || n.from;
+      const statusChip = q.status === 'memo'
+        ? '<span class="text-xs font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-800">💡 ポイント</span>'
+        : q.answers.length
+          ? `<span class="text-xs font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">✅ 回答 ${q.answers.length}件</span>`
+          : '<span class="text-xs font-bold px-2 py-0.5 rounded bg-rose-50 text-rose-700">❓ 未回答</span>';
+      const aiBtn = AI_TUTOR_ENABLED
+        ? `<button onclick="sendNoteToAi(${n.id})" class="px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded-lg text-xs transition">🤖 AI解説</button>`
+        : `<button onclick="sendNoteToAi(${n.id})" title="AI解説は準備中です" class="px-2.5 py-1.5 bg-slate-50 text-slate-400 border border-dashed border-slate-300 font-bold rounded-lg text-xs cursor-not-allowed">🤖 AI解説（準備中）</button>`;
+      return `
+        <article class="p-3.5 md:p-4 rounded-xl border ${isNew ? 'border-emerald-400 bg-emerald-50/40' : q.resolved ? 'border-slate-200 bg-slate-50 opacity-75' : 'border-indigo-200 bg-white'} space-y-2.5">
+          <div class="flex flex-col md:flex-row justify-between gap-3">
+            <div class="space-y-1.5 flex-1 min-w-0">
+              <div class="flex flex-wrap items-center gap-2">
+                ${isNew ? '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-600 text-white">NEW</span>' : ''}
+                <span class="text-xs font-bold px-2 py-0.5 rounded bg-indigo-600 text-white">📮 質問</span>
+                ${mine ? '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-800">あなた</span>' : ''}
+                ${from ? `<span class="text-xs font-bold px-2 py-0.5 rounded bg-sky-50 text-sky-700">👤 ${escapeHtml(from)}</span>` : (mine ? '' : '<span class="text-xs font-bold px-2 py-0.5 rounded bg-sky-50 text-sky-700">👤 名前なし</span>')}
+                <span class="text-xs font-bold px-2 py-0.5 rounded bg-indigo-50 text-indigo-700">${escapeHtml(n.topic)}</span>
+                ${statusChip}
+                ${q.resolved ? '<span class="text-xs font-bold px-2 py-0.5 rounded bg-slate-200 text-slate-700">✓ 解決済み</span>' : ''}
+                <span class="text-xs text-slate-400">${escapeHtml(n.createdAt)}</span>
+              </div>
+              <p class="text-sm font-medium break-words whitespace-pre-wrap ${q.resolved ? 'line-through text-slate-400' : 'text-slate-800'}">${escapeHtml(n.text)}</p>
+              ${photoThumb(n, '問題の写真', 'h-28 max-w-[220px]')}
+            </div>
+            <div class="flex flex-wrap items-start gap-1.5 shrink-0 md:max-w-[45%] md:justify-end">
+              ${q.local ? syncBadge(n, ctx.gasOn) : ''}
+              <button onclick="toggleQuestionResolved('${uid}')" class="px-2.5 py-1.5 ${q.resolved ? 'bg-slate-200 text-slate-700' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'} font-bold rounded-lg text-xs transition">${q.resolved ? '未解決に戻す' : '✓ 解決済みにする'}</button>
+              ${q.local ? `
+              <button onclick="openReviewCalendar(${n.id})" title="この問題の復習予定をGoogleカレンダーに追加" class="px-2.5 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200 font-bold rounded-lg text-xs transition">📅 復習</button>
+              ${aiBtn}
+              <button onclick="editNoteText(${n.id})" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-xs transition">編集</button>
+              <button onclick="deleteNote(${n.id})" class="px-2.5 py-1.5 text-rose-500 hover:bg-rose-50 font-bold rounded-lg text-xs transition">削除</button>` : ''}
+            </div>
+          </div>
+          <div class="border-l-4 border-emerald-200 pl-3 space-y-2">
+            <div class="text-xs font-bold text-emerald-800">💬 この質問への回答（${q.answers.length}件）</div>
+            ${q.answers.map(a => renderAnswerItem(a, ctx)).join('')}
+            ${openAnswerForms.has(uid) ? renderAnswerForm(uid) : `
+            <button onclick="toggleAnswerForm('${uid}')" class="px-3 py-1.5 bg-white hover:bg-emerald-50 border border-emerald-300 text-emerald-700 font-bold rounded-lg text-xs transition">💬 回答を書く</button>`}
+          </div>
+        </article>`;
+    }
+
+    function renderQA() {
+      const list = document.getElementById('qaList');
+      if (!list) return;
+      const questions = buildQaModel();
+      const counts = {
+        all: questions.length,
+        unanswered: questions.filter(q => q.status === 'unanswered').length,
+        answered: questions.filter(q => q.status === 'answered').length
+      };
+      const tabBadge = document.getElementById('unresolvedBadge');
+      tabBadge.textContent = counts.unanswered;
+      tabBadge.classList.toggle('hidden', counts.unanswered === 0);
+      const logBadge = document.getElementById('qaUnansweredBadge');
+      logBadge.textContent = `未回答 ${counts.unanswered}`;
+      logBadge.classList.toggle('hidden', counts.unanswered === 0);
+      document.getElementById('qaCountAll').textContent = counts.all;
+      document.getElementById('qaCountUnanswered').textContent = counts.unanswered;
+      document.getElementById('qaCountAnswered').textContent = counts.answered;
+      document.querySelectorAll('.qa-filter-btn').forEach(btn => {
+        const active = btn.getAttribute('data-filter') === qaFilter;
+        btn.classList.toggle('bg-white', active);
+        btn.classList.toggle('text-indigo-700', active);
+        btn.classList.toggle('shadow-sm', active);
+        btn.classList.toggle('text-slate-600', !active);
+        btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+      });
+
+      // 変換中に描き直すと入力が消えるので、変換が終わってから描き直す
+      if (qaComposing) { qaRenderPending = true; return; }
+      qaRenderPending = false;
+
+      const shown = qaFilter === 'all' ? questions : questions.filter(q => q.status === qaFilter);
+      if (shown.length === 0) {
+        const msg = questions.length === 0
+          ? 'まだ質問はありません。わからない問題を上の質問箱から投稿してください。'
+          : qaFilter === 'unanswered' ? '未回答の質問はありません 🎉' : 'まだ回答のついた質問はありません。';
+        list.innerHTML = `<div class="p-8 rounded-xl border border-dashed border-slate-300 text-center text-sm text-slate-400">${escapeHtml(msg)}</div>`;
         return;
       }
 
-      const aiBtn = (id) => AI_TUTOR_ENABLED
-        ? `<button onclick="sendNoteToAi(${id})" class="px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded-lg text-xs transition">🤖 AI解説</button>`
-        : `<button onclick="sendNoteToAi(${id})" title="AI解説は準備中です" class="px-2.5 py-1.5 bg-slate-50 text-slate-400 border border-dashed border-slate-300 font-bold rounded-lg text-xs cursor-not-allowed">🤖 AI解説（準備中）</button>`;
-
-      // 共有ボード（GAS）への送信状態。共有ボードから保存した他人のメモ（from あり）は送らない
-      const gasOn = !!getGasConfig().url;
-      const syncBtn = (n) => {
-        if (n.from) return '';
-        if (syncingIds.has(n.id)) return `<span class="px-2 py-1 text-xs font-bold text-slate-600 bg-slate-100 rounded-lg">⏳ 送信中</span>`;
-        if (n.synced === true) return `<span class="px-2 py-1 text-xs font-bold text-sky-700 bg-sky-50 rounded-lg">☁ 全員へ共有済</span>`;
-        if (!gasOn) return `<span class="px-2 py-1 text-xs font-bold text-slate-500 bg-slate-50 rounded-lg" title="⚙ 設定で共有URLを登録すると全員に共有されます">📱 ローカル保存のみ</span>`;
-        return `<button onclick="syncNoteToClass(${n.id})" title="${n.synced === false ? '送信に失敗しました。押すと送り直します' : 'このメモはまだ共有されていません'}" class="px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 font-bold rounded-lg text-xs transition">⚠ ローカル保存のみ（${n.synced === false ? '未送信' : '未共有'}）・再送</button>`;
-      };
-
-      list.innerHTML = notesData.map(n => `
-        <div class="bg-white p-4 rounded-xl shadow-sm border ${n.resolved ? 'border-slate-200 opacity-65' : 'border-indigo-200'} flex flex-col md:flex-row justify-between gap-3">
-          <div class="space-y-1.5 flex-1 min-w-0">
-            <div class="flex flex-wrap items-center gap-2">
-              <span class="text-xs font-bold px-2 py-0.5 rounded bg-indigo-50 text-indigo-700">${escapeHtml(n.topic)}</span>
-              <span class="text-xs font-bold px-2 py-0.5 rounded ${n.type === 'question' ? 'bg-rose-50 text-rose-700' : 'bg-amber-50 text-amber-800'}">
-                ${n.type === 'question' ? '❓ 質問' : '💡 ポイント'}
-              </span>
-              ${n.from ? `<span class="text-xs font-bold px-2 py-0.5 rounded bg-sky-50 text-sky-700">👤 ${escapeHtml(n.from)}</span>` : ''}
-              <span class="text-xs text-slate-400">${escapeHtml(n.createdAt)}</span>
-            </div>
-            <p class="text-sm font-medium break-words whitespace-pre-wrap ${n.resolved ? 'line-through text-slate-400' : 'text-slate-800'}">${escapeHtml(n.text)}</p>
-            ${isSafeImageDataUrl(n.photo) ? `
-              <button onclick="openPhotoViewer(${n.id})" class="inline-flex flex-col items-start gap-0.5" title="タップで拡大">
-                <img src="${escapeHtml(n.photo)}" alt="添付写真" class="h-24 max-w-[200px] object-cover rounded-lg border border-slate-300 hover:opacity-90">
-                <span class="text-[11px] text-slate-500">🔍 タップで拡大</span>
-              </button>` : ''}
-          </div>
-          <div class="flex flex-wrap items-center gap-1.5 shrink-0">
-            ${syncBtn(n)}
-            <button onclick="openReviewCalendar(${n.id})" title="この問題の復習予定をGoogleカレンダーに追加" class="px-2.5 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200 font-bold rounded-lg text-xs transition">📅 復習</button>
-            ${aiBtn(n.id)}
-            <button onclick="editNoteText(${n.id})" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-xs transition">編集</button>
-            <button onclick="toggleNoteResolved(${n.id})" class="px-2.5 py-1.5 ${n.resolved ? 'bg-slate-200 text-slate-700' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'} font-bold rounded-lg text-xs transition">
-              ${n.resolved ? '未解決に戻す' : '✓ 解決済'}
-            </button>
-            <button onclick="deleteNote(${n.id})" class="px-2.5 py-1.5 text-rose-500 hover:bg-rose-50 font-bold rounded-lg text-xs transition">削除</button>
-          </div>
-        </div>
-      `).join('');
+      // 書きかけの回答欄のフォーカスとカーソル位置を描き直し後も保つ
+      const ae = document.activeElement;
+      const focusUid = ae && ae.getAttribute && ae.getAttribute('data-ans-uid');
+      const sel = focusUid ? [ae.selectionStart, ae.selectionEnd] : null;
+      const ctx = { now: Date.now(), gasOn: !!getGasConfig().url };
+      list.innerHTML = shown.map(q => renderQuestionCard(q, ctx)).join('');
+      if (focusUid && isValidUid(focusUid)) {
+        const ta = list.querySelector(`textarea[data-ans-uid="${focusUid}"]`);
+        if (ta) {
+          ta.focus({ preventScroll: true });
+          try { ta.setSelectionRange(sel[0], sel[1]); } catch (e) {}
+        }
+      }
     }
 
     function notesToPlainText() {
-      return notesData.map(n => `[${n.resolved ? '解決済' : '未解決'}][${n.topic}]${n.from ? `[${n.from}]` : ''}${n.createdAt ? `(${n.createdAt})` : ''} ${n.text}${n.photo ? ' [写真あり]' : ''}`).join('\n');
+      const label = { unanswered: '未回答', answered: '回答済み', memo: 'ポイント' };
+      return buildQaModel().map(q => {
+        const n = q.e;
+        const from = (q.board && q.board.from) || n.from;
+        const head = `[${q.resolved ? '解決済み' : label[q.status]}][${n.topic}]${from ? `[${from}]` : ''}${n.createdAt ? `(${n.createdAt})` : ''} ${n.text}${n.photo ? ' [写真あり]' : ''}`;
+        const answers = q.answers.map(a => {
+          const af = (a.board && a.board.from) || a.e.from;
+          return `  └ 回答${af ? `[${af}]` : ''}${a.e.createdAt ? `(${a.e.createdAt})` : ''} ${a.e.text}${a.e.photo ? ' [写真あり]' : ''}`;
+        });
+        return [head, ...answers].join('\n');
+      }).join('\n');
     }
 
     function copyAllNotes() {
-      if (notesData.length === 0) return alert('コピーするメモがありません。');
-      copyText(notesToPlainText())
-        .then(() => alert('すべてのメモをクリップボードにコピーしました！'))
+      const text = notesToPlainText();
+      if (!text) return alert('コピーする質問がありません。');
+      copyText(text)
+        .then(() => alert('質問ログ（回答つき）をクリップボードにコピーしました！'))
         .catch(() => alert('コピーできませんでした。「.txt保存」をお使いください。'));
     }
 
@@ -2402,8 +2798,9 @@ function doPost(e) {
     }
 
     function exportNotesTxt() {
-      if (notesData.length === 0) return alert('保存するメモがありません。');
-      downloadText(notesToPlainText(), `math_notes_${new Date().toISOString().slice(0, 10)}.txt`);
+      const text = notesToPlainText();
+      if (!text) return alert('保存する質問がありません。');
+      downloadText(text, `math_questions_${new Date().toISOString().slice(0, 10)}.txt`);
     }
 
     /* ---------- クリップボード・状態表示の共通処理 ---------- */
@@ -2450,11 +2847,12 @@ function doPost(e) {
     const GAS_ROOM_KEY = 'math_lab_gas_room';
     const CLASS_AUTO_KEY = 'math_lab_class_auto';
     const DEFAULT_ROOM = 'math-class';
-    const CLASS_POLL_MS = 6000;
+    const CLASS_POLL_MS = 6000;      // 質問箱画面を表示中の取得間隔
+    const CLASS_BG_POLL_MS = 30000;  // 別のタブ・別の画面を見ている間の取得間隔（新着通知用）
     const CLASS_MAX_BACKOFF_MS = 60000;
     const CLASS_MAX_ITEMS = 300;
 
-    let classNotes = [];          // 共有ボードで取得した投稿（メモリ上のみ。端末の保存容量を圧迫しない）
+    let classNotes = [];          // 共有ボードで取得した質問・回答（メモリ上のみ。端末の保存容量を圧迫しない）
     let classSince = 1;           // 取得済みの最終行（シートの1行目は見出し）
     let classFetching = false;
     let classLoadedOnce = false;
@@ -2463,8 +2861,10 @@ function doPost(e) {
     let classConfigKey = '';
     let classFailCount = 0;       // 連続失敗回数（失敗が続いたら取得間隔をのばす）
     let classNextPollAt = 0;
+    let classLastPollAt = 0;
     let classRefreshQueued = false;
     let classFetchPromise = Promise.resolve();
+    let classServerVersion = 0;   // 0：未確認、1：回答に未対応の古いGAS、2：回答対応版
     const syncingIds = new Set(); // 送信中のメモ（画面表示用。保存はしない）
 
     function lsGet(key) {
@@ -2544,6 +2944,16 @@ function doPost(e) {
       return parseGasResponse(res);
     }
 
+    // 古いGAS（回答に未対応）に回答を送ると「質問」として保存されてしまうため、先に版を確かめる
+    async function ensureServerSupportsAnswers(cfg) {
+      if (classServerVersion >= 2) return;
+      const data = await gasGet(cfg, { action: 'ping' });
+      classServerVersion = Number(data.v) || 1;
+      if (classServerVersion < 2) {
+        throw new Error('共有用GASのコードが古いため、回答を共有できません。管理者（先生）が設定画面の「📋 GAS用コードをコピー」で最新のコードに貼り替え、デプロイを更新してください。');
+      }
+    }
+
     function setNoteSyncStatus(message, kind) {
       const el = document.getElementById('noteSyncStatus');
       if (!el) return;
@@ -2557,15 +2967,19 @@ function doPost(e) {
       if (!cfg.url) return alert('クラス共有のGAS URLが未設定です。右上の「⚙ 設定」から登録してください。');
       const note = notesData.find(n => n.id === id);
       if (!note || note.from || syncingIds.has(id)) return;
+      const kind = note.entryType === 'answer' ? '回答' : '質問';
       syncingIds.add(id);
       renderNotes();
-      setNoteSyncStatus('⏳ 共有ボードに送信中...', 'info');
+      setNoteSyncStatus(`⏳ ${kind}を共有ボードに送信中...`, 'info');
       try {
+        if (note.entryType === 'answer') await ensureServerSupportsAnswers(cfg);
         const data = await gasPost(cfg, {
           action: 'post',
           room: cfg.room,
           note: {
             uid: note.uid,
+            entryType: note.entryType,
+            parentId: note.parentId,
             from: lsGet(STUDENT_NAME_KEY).slice(0, 30),
             topic: note.topic,
             type: note.type,
@@ -2576,11 +2990,11 @@ function doPost(e) {
           }
         });
         note.synced = true;
-        setNoteSyncStatus(data.duplicate ? '☁ すでに全員へ共有されています。' : `☁ 全員へ共有しました（ルーム：${cfg.room}）。`, 'ok');
-        refreshClassBoard(true); // 自分の共有ボードにもすぐ反映
+        setNoteSyncStatus(data.duplicate ? `☁ この${kind}はすでに全員へ共有されています。` : `☁ ${kind}を全員へ共有しました（ルーム：${cfg.room}）。`, 'ok');
+        refreshClassBoard(true); // 自分の画面にもすぐ反映
       } catch (err) {
         note.synced = false;
-        setNoteSyncStatus(`⚠ メモはこの端末に保存済みです。共有ボードへの送信に失敗しました：${gasErrorMessage(err)}\n（メモの「再送」ボタンから送り直せます）`, 'error');
+        setNoteSyncStatus(`⚠ ${kind}はこの端末に保存済みです。共有ボードへの送信に失敗しました：${gasErrorMessage(err)}\n（「再送」ボタンから送り直せます）`, 'error');
       } finally {
         syncingIds.delete(id);
       }
@@ -2620,7 +3034,11 @@ function doPost(e) {
       try {
         const data = await gasGet({ url }, { action: 'ping' });
         if (data.app !== 'math-lab-share') throw new Error('このURLはクラス共有用のGASではないようです（コードを確認してください）。');
-        showStatus('gasConfigStatus', '✅ 接続できました。「共有設定を保存」を押して使い始めてください。', 'ok');
+        if ((Number(data.v) || 1) < 2) {
+          showStatus('gasConfigStatus', '⚠ 接続できましたが、GASのコードが古い版です。質問は共有できますが、回答を共有するには「📋 GAS用コードをコピー」で最新のコードに貼り替え、デプロイを更新してください。', 'warn');
+        } else {
+          showStatus('gasConfigStatus', '✅ 接続できました。「共有設定を保存」を押して使い始めてください。', 'ok');
+        }
       } catch (err) {
         showStatus('gasConfigStatus', '❌ ' + gasErrorMessage(err), 'error');
       }
@@ -2629,14 +3047,14 @@ function doPost(e) {
     function copyGasCode() {
       const code = document.getElementById('gasCodeTemplate').textContent.trim();
       copyText(code)
-        .then(() => showStatus('gasConfigStatus', '📋 GAS用コードをコピーしました。スプレッドシートの［拡張機能］→［Apps Script］に貼り付けてください。', 'ok'))
+        .then(() => showStatus('gasConfigStatus', '📋 GAS用コードをコピーしました。スプレッドシートの［拡張機能］→［Apps Script］に貼り付けてください（メール通知を使う場合は NOTIFY_EMAIL を設定）。', 'ok'))
         .catch(() => showStatus('gasConfigStatus', 'コピーできませんでした。リポジトリの index.html 内「gasCodeTemplate」のコードを使ってください。', 'warn'));
     }
 
     function setClassAuto(on) {
       lsSet(CLASS_AUTO_KEY, on ? '' : '0');
       document.getElementById('classAutoChk').checked = !!on;
-      renderClassBoard();
+      renderClassBoard('', true);
     }
 
     // 共有設定に合わせて画面の表示を切り替える
@@ -2652,19 +3070,22 @@ function doPost(e) {
         classLastUpdated = null;
         classFailCount = 0;
         classNextPollAt = 0;
+        classLastPollAt = 0;
+        classServerVersion = 0;
+        setUnreadCount(0);
       }
       const info = document.getElementById('shareModeInfo');
       info.textContent = cfg.url
-        ? `☁ 追加すると共有ボード（ルーム：${cfg.room}）の全員に自動で共有されます`
+        ? `☁ 投稿すると共有ボード（ルーム：${cfg.room}）の全員に自動で共有されます`
         : '📱 共有URLが未設定のため、この端末にだけ保存されます';
       info.className = `text-xs font-bold ${cfg.url ? 'text-sky-700' : 'text-slate-500'}`;
       document.getElementById('shareSetupBtn').classList.toggle('hidden', !!cfg.url);
       document.getElementById('classAutoChk').checked = isClassAuto();
       updateApiUi();
+      updateNotifyButtons();
       renderNotes();
-      renderClassBoard();
-      const notesView = document.getElementById('notesModule');
-      if (cfg.url && notesView && !notesView.classList.contains('hidden')) refreshClassBoard(true);
+      renderClassBoard('', true);
+      if (cfg.url && isQaTabOpen()) refreshClassBoard(true);
     }
 
     async function refreshClassBoard(manual) {
@@ -2689,16 +3110,22 @@ function doPost(e) {
 
     async function doRefreshClassBoard(cfg, key, manual) {
       classFetching = true;
-      if (manual) renderClassBoard('取得中...');
+      classLastPollAt = Date.now();
+      if (manual) renderClassBoard('取得中...', true);
       try {
         let added = 0;
+        let reset = false;
+        const own = ownUidSet();
+        const fresh = [];
         for (let page = 0; page < 5; page++) {
           const data = await gasGet(cfg, { action: 'list', room: cfg.room, since: classSince, limit: 30 });
           if (key !== classConfigKey) return; // 取得中に設定が変わった
-          // シートが消去された等で行数が減ったら最初から取り直す
+          classServerVersion = Number(data.v) || 1;
+          // シートが消去された等で行数が減ったら最初から取り直す（このときは通知しない）
           if (Number.isSafeInteger(data.total) && data.total < classSince && classSince > 1) {
             classNotes = [];
             classSince = 1;
+            reset = true;
             continue;
           }
           const known = new Set(classNotes.map(n => n.uid));
@@ -2708,7 +3135,10 @@ function doPost(e) {
             known.add(note.uid);
             note.seq = Number.isSafeInteger(raw.seq) ? raw.seq : 0;
             note.receivedAt = String(raw.receivedAt ?? '').slice(0, 40);
-            note.newUntil = classLoadedOnce ? Date.now() + 60000 : 0;
+            note.newUntil = 0;
+            note.unseen = false;
+            // 2回目以降の取得で届いた、自分以外の投稿だけを「新着」として扱う
+            if (classLoadedOnce && !reset && !own.has(note.uid)) fresh.push(note);
             classNotes.push(note);
             added++;
           });
@@ -2722,6 +3152,10 @@ function doPost(e) {
         classNotes.forEach(n => {
           if (n.newUntil && n.newUntil <= now) { n.newUntil = 0; expired = true; }
         });
+        const viewing = isUserViewingQa();
+        fresh.forEach(n => {
+          if (viewing) n.newUntil = now + 60000; else n.unseen = true; // 見ていない間の新着は、見たときにNEW表示
+        });
         const wasLoaded = classLoadedOnce;
         const hadError = !!classError;
         classLoadedOnce = true;
@@ -2731,102 +3165,302 @@ function doPost(e) {
         classNextPollAt = 0;
         // 変化がなければ一覧（写真）は描き直さず、状態表示だけ更新する
         renderClassBoard('', wasLoaded && !added && !expired && !hadError && !manual);
+        if (fresh.length) notifyNewArrivals(fresh);
       } catch (err) {
         if (key === classConfigKey) {
           classError = gasErrorMessage(err);
           // 失敗が続くときは 12秒→24秒→…最大60秒 と間隔をのばし、GASへの負荷を抑える
           classFailCount++;
           classNextPollAt = Date.now() + Math.min(CLASS_POLL_MS * 2 ** classFailCount, CLASS_MAX_BACKOFF_MS);
-          renderClassBoard();
+          renderClassBoard('', true);
         }
       } finally {
         classFetching = false;
       }
     }
 
+    // 共有ボードの状態表示を更新し、statusOnly でなければ質問ログも描き直す
     function renderClassBoard(statusOverride, statusOnly) {
       const cfg = getGasConfig();
       const status = document.getElementById('classBoardStatus');
-      const list = document.getElementById('classBoardList');
       document.getElementById('classBoardSetupHint').classList.toggle('hidden', !!cfg.url);
       document.getElementById('classBoardControls').classList.toggle('hidden', !cfg.url);
 
       if (!cfg.url) {
-        status.textContent = '共有ボードは未設定です。';
+        status.textContent = '共有ボード未設定：この端末の質問・回答だけを表示しています。';
         status.className = 'text-xs text-slate-500';
-        list.innerHTML = '';
-        return;
+      } else {
+        const parts = [`ルーム「${cfg.room}」・共有${classNotes.length}件`];
+        if (statusOverride) parts.push(statusOverride);
+        else if (classLastUpdated) parts.push(`最終更新 ${classLastUpdated.toLocaleTimeString('ja-JP')}`);
+        else if (!classLoadedOnce) parts.push('読み込み中...');
+        parts.push(isClassAuto() ? '自動更新ON' : '自動更新OFF');
+        if (classError) parts.push('⚠ ' + classError);
+        status.textContent = parts.join('　');
+        status.className = `text-xs ${classError ? 'text-rose-700 font-bold' : 'text-slate-500'}`;
       }
-
-      const parts = [`ルーム「${cfg.room}」・${classNotes.length}件`];
-      if (statusOverride) parts.push(statusOverride);
-      else if (classLastUpdated) parts.push(`最終更新 ${classLastUpdated.toLocaleTimeString('ja-JP')}`);
-      parts.push(isClassAuto() ? '自動更新ON（この画面を表示中のみ）' : '自動更新OFF');
-      if (classError) parts.push('⚠ ' + classError);
-      status.textContent = parts.join('　');
-      status.className = `text-xs ${classError ? 'text-rose-700 font-bold' : 'text-slate-500'}`;
-      if (statusOnly) return;
-
-      if (classNotes.length === 0) {
-        list.innerHTML = `<div class="p-6 rounded-xl border border-dashed border-slate-300 text-center text-sm text-slate-400">${classLoadedOnce ? 'まだ投稿はありません。「＋ メモを追加」すると、ここに数秒で表示されます。' : '読み込み中...'}</div>`;
-        return;
-      }
-
-      const now = Date.now();
-      const mine = new Set(notesData.filter(n => !n.from).map(n => n.uid));
-      list.innerHTML = classNotes.map(n => `
-        <div class="p-3.5 rounded-xl border ${n.newUntil > now ? 'border-emerald-400 bg-emerald-50/60' : 'border-slate-200 bg-slate-50'} flex flex-col md:flex-row justify-between gap-3">
-          <div class="space-y-1.5 flex-1 min-w-0">
-            <div class="flex flex-wrap items-center gap-2">
-              ${n.newUntil > now ? '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-600 text-white">NEW</span>' : ''}
-              ${mine.has(n.uid) ? '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-600 text-white">あなた</span>' : ''}
-              <span class="text-xs font-bold px-2 py-0.5 rounded bg-sky-100 text-sky-800">👤 ${escapeHtml(n.from || '名前なし')}</span>
-              <span class="text-xs font-bold px-2 py-0.5 rounded bg-indigo-50 text-indigo-700">${escapeHtml(n.topic)}</span>
-              <span class="text-xs font-bold px-2 py-0.5 rounded ${n.type === 'question' ? 'bg-rose-50 text-rose-700' : 'bg-amber-50 text-amber-800'}">${n.type === 'question' ? '❓ 質問' : '💡 ポイント'}</span>
-              <span class="text-xs text-slate-400">${escapeHtml(n.createdAt)}</span>
-            </div>
-            <p class="text-sm font-medium text-slate-800 break-words whitespace-pre-wrap">${escapeHtml(n.text)}</p>
-            ${isSafeImageDataUrl(n.photo) ? `
-              <button onclick="openPhotoViewer(${n.id})" class="inline-flex flex-col items-start gap-0.5" title="タップで拡大">
-                <img src="${escapeHtml(n.photo)}" alt="生徒の添付写真" class="h-28 max-w-[220px] object-cover rounded-lg border border-slate-300 hover:opacity-90">
-                <span class="text-[11px] text-slate-500">🔍 タップで拡大</span>
-              </button>` : ''}
-          </div>
-          <div class="flex flex-wrap items-start gap-1.5 shrink-0">
-            ${mine.has(n.uid) ? '' : `<button onclick="saveClassNoteLocally(${n.id})" class="px-2.5 py-1.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 font-bold rounded-lg text-xs transition">📥 自分のメモに保存</button>`}
-          </div>
-        </div>
-      `).join('');
+      if (!statusOnly) renderQA();
     }
 
-    function saveClassNoteLocally(id) {
-      const n = classNotes.find(c => c.id === id);
-      if (!n) return;
-      if (notesData.some(m => m.uid === n.uid)) return alert('このメモはすでに保存されています。');
-      const ok = addNoteRecord({
-        uid: n.uid, topic: n.topic, type: n.type, text: n.text,
-        resolved: n.resolved, createdAt: n.createdAt, from: n.from || '名前なし', photo: n.photo
-      });
-      if (ok) alert('自分の学習メモに保存しました。');
-    }
-
-    // タブ表示中かつ学習メモ画面を開いている間だけ自動取得する
+    // 質問箱画面を表示中は6秒ごと、別のタブ・画面を見ている間も30秒ごとに取得して新着を通知する
     function classPollTick() {
-      if (document.visibilityState !== 'visible') return;
-      const notesView = document.getElementById('notesModule');
-      if (!notesView || notesView.classList.contains('hidden')) return;
-      if (!isClassAuto()) {
-        const now = Date.now();
-        let expired = false;
-        classNotes.forEach(n => {
-          if (n.newUntil && n.newUntil <= now) { n.newUntil = 0; expired = true; }
-        });
-        if (expired) renderClassBoard();
-        return;
-      }
-      if (Date.now() < classNextPollAt) return; // 通信エラーが続いている間は間隔をあける
+      const now = Date.now();
+      let expired = false;
+      classNotes.forEach(n => {
+        if (n.newUntil && n.newUntil <= now) { n.newUntil = 0; expired = true; }
+      });
+      if (expired && isQaTabOpen()) renderQA();
+      if (!getGasConfig().url || !isClassAuto()) return;
+      if (now < classNextPollAt) return; // 通信エラーが続いている間は間隔をあける
+      const viewing = document.visibilityState === 'visible' && isQaTabOpen();
+      const interval = viewing ? CLASS_POLL_MS : CLASS_BG_POLL_MS;
+      if (now - classLastPollAt < interval - 500) return;
       refreshClassBoard(false);
     }
+
+    /* ==================== 4-C. 新着通知（OS通知・タイトル/ファビコン・アプリバッジ・通知音） ==================== */
+    const NOTIFY_KEY = 'math_lab_notify_desktop';
+    const SOUND_KEY = 'math_lab_notify_sound';
+    const BASE_TITLE = document.title;
+    let unreadCount = 0;
+    let audioCtx = null;
+    const faviconCache = {};
+
+    function isQaTabOpen() {
+      const view = document.getElementById('notesModule');
+      return !!view && !view.classList.contains('hidden');
+    }
+
+    // 「見ている」＝ページが表示中・質問箱画面を開いている・ウィンドウにフォーカスがある
+    function isUserViewingQa() {
+      return document.visibilityState === 'visible' && isQaTabOpen() &&
+        (typeof document.hasFocus !== 'function' || document.hasFocus());
+    }
+
+    function notifyNewArrivals(list) {
+      if (isSoundOn()) playChime();
+      if (isUserViewingQa()) return;
+      setUnreadCount(unreadCount + list.length);
+      showDesktopNotification(list);
+    }
+
+    // 画面を見たら未読をリセットし、見ていない間に届いた投稿をNEW表示にする
+    function markQaSeen() {
+      if (!isUserViewingQa()) return;
+      const until = Date.now() + 60000;
+      let changed = false;
+      classNotes.forEach(n => {
+        if (n.unseen) { n.unseen = false; n.newUntil = until; changed = true; }
+      });
+      if (unreadCount) setUnreadCount(0);
+      if (changed) renderQA();
+    }
+
+    function setUnreadCount(n) {
+      unreadCount = Math.max(0, n | 0);
+      document.title = unreadCount > 0 ? `(${unreadCount}) ${BASE_TITLE}` : BASE_TITLE;
+      setFavicon(unreadCount > 0);
+      updateAppBadge(unreadCount);
+      const tabDot = document.getElementById('qaUnreadBadge');
+      if (tabDot) {
+        tabDot.textContent = `新着${unreadCount}`;
+        tabDot.classList.toggle('hidden', unreadCount === 0);
+      }
+    }
+
+    function makeFavicon(dot) {
+      const k = dot ? 'dot' : 'base';
+      if (faviconCache[k]) return faviconCache[k];
+      const c = document.createElement('canvas');
+      c.width = 64;
+      c.height = 64;
+      const x = c.getContext('2d');
+      x.fillStyle = '#4338ca';
+      x.beginPath();
+      x.moveTo(14, 2); x.arcTo(62, 2, 62, 62, 12); x.arcTo(62, 62, 2, 62, 12); x.arcTo(2, 62, 2, 2, 12); x.arcTo(2, 2, 62, 2, 12);
+      x.closePath();
+      x.fill();
+      x.fillStyle = '#ffffff';
+      x.font = 'bold 40px sans-serif';
+      x.textAlign = 'center';
+      x.textBaseline = 'middle';
+      x.fillText('数', 32, 35);
+      if (dot) {
+        x.beginPath();
+        x.arc(48, 16, 15, 0, Math.PI * 2);
+        x.fillStyle = '#ef4444';
+        x.fill();
+        x.lineWidth = 4;
+        x.strokeStyle = '#ffffff';
+        x.stroke();
+      }
+      faviconCache[k] = c.toDataURL('image/png');
+      return faviconCache[k];
+    }
+
+    function setFavicon(dot) {
+      try {
+        let link = document.getElementById('appFavicon');
+        if (!link) {
+          link = document.createElement('link');
+          link.id = 'appFavicon';
+          link.rel = 'icon';
+          link.type = 'image/png';
+          document.head.appendChild(link);
+        }
+        const href = makeFavicon(!!dot);
+        if (link.getAttribute('href') !== href) link.setAttribute('href', href);
+      } catch (e) {}
+    }
+
+    // Badging API（対応ブラウザ・ホーム画面に追加したアプリのみ。未対応なら何もしない）
+    function updateAppBadge(n) {
+      try {
+        if (n > 0 && typeof navigator.setAppBadge === 'function') {
+          Promise.resolve(navigator.setAppBadge(n)).catch(() => {});
+        } else if (n <= 0 && typeof navigator.clearAppBadge === 'function') {
+          Promise.resolve(navigator.clearAppBadge()).catch(() => {});
+        }
+      } catch (e) {}
+    }
+
+    function isDesktopNotifyOn() {
+      return lsGet(NOTIFY_KEY) === '1' && 'Notification' in window && Notification.permission === 'granted';
+    }
+
+    function isSoundOn() {
+      return lsGet(SOUND_KEY) === '1';
+    }
+
+    function updateNotifyButtons() {
+      const nBtn = document.getElementById('notifyToggleBtn');
+      const sBtn = document.getElementById('soundToggleBtn');
+      const on = 'bg-amber-100 border-amber-300 text-amber-900';
+      const off = 'bg-white border-slate-300 text-slate-600 hover:bg-slate-50';
+      if (nBtn) {
+        const n = isDesktopNotifyOn();
+        nBtn.textContent = n ? '🔔 通知ON' : '🔕 通知OFF';
+        nBtn.className = `px-2.5 py-1.5 border rounded-lg text-xs font-bold transition ${n ? on : off}`;
+        nBtn.setAttribute('aria-pressed', n ? 'true' : 'false');
+        nBtn.title = n ? '新着の質問・回答をデスクトップ通知で知らせます（押すとOFF）' : '押すと、新着の質問・回答をデスクトップ通知で知らせます';
+      }
+      if (sBtn) {
+        const s = isSoundOn();
+        sBtn.textContent = s ? '🔊 音ON' : '🔇 音OFF';
+        sBtn.className = `px-2.5 py-1.5 border rounded-lg text-xs font-bold transition ${s ? on : off}`;
+        sBtn.setAttribute('aria-pressed', s ? 'true' : 'false');
+      }
+    }
+
+    function requestNotifyPermission() {
+      return new Promise(resolve => {
+        try {
+          const p = Notification.requestPermission(resolve); // 古いSafariはコールバック形式
+          if (p && typeof p.then === 'function') p.then(resolve, () => resolve('denied'));
+        } catch (e) {
+          resolve('denied');
+        }
+      });
+    }
+
+    async function toggleDesktopNotify() {
+      if (lsGet(NOTIFY_KEY) === '1' && isDesktopNotifyOn()) {
+        lsSet(NOTIFY_KEY, '');
+        updateNotifyButtons();
+        return;
+      }
+      if (!('Notification' in window)) {
+        lsSet(NOTIFY_KEY, '');
+        updateNotifyButtons();
+        return alert('このブラウザはデスクトップ通知に対応していません。\n（iPhone・iPadは「ホーム画面に追加」したアプリで使える場合があります）\nタイトルとアイコンの新着表示・通知音は使えます。');
+      }
+      let perm = Notification.permission;
+      if (perm === 'default') perm = await requestNotifyPermission();
+      if (perm !== 'granted') {
+        lsSet(NOTIFY_KEY, '');
+        updateNotifyButtons();
+        return alert('通知が許可されていません。アドレスバー左のアイコン（サイトの設定）で「通知」を許可してから、もう一度押してください。');
+      }
+      lsSet(NOTIFY_KEY, '1');
+      updateNotifyButtons();
+      showNotificationRaw('🔔 通知をONにしました', '新しい質問や回答が届くと、ここでお知らせします。');
+    }
+
+    function showNotificationRaw(title, body) {
+      try {
+        // Notification の本文はHTMLとして解釈されないプレーンテキスト。制御文字だけ取り除く
+        const clean = s => String(s).replace(/[\u0000-\u001f\u007f]+/g, ' ').slice(0, 200);
+        const n = new Notification(clean(title), { body: clean(body), tag: 'math-lab-qa', icon: makeFavicon(true) });
+        n.onclick = () => {
+          try { window.focus(); } catch (e) {}
+          goToTab('notes');
+          n.close();
+        };
+      } catch (e) {
+        // Android版Chrome等は Service Worker なしでは通知できないため、エラーを出さずに省略
+      }
+    }
+
+    function showDesktopNotification(list) {
+      if (!isDesktopNotifyOn() || !list.length) return;
+      const first = list[0];
+      const kind = first.entryType === 'answer' ? '💬 新しい回答' : '📮 新しい質問';
+      const title = list.length > 1 ? `🔔 新着 ${list.length}件（質問・回答）` : `${kind}（${first.topic}）`;
+      const body = `${first.from || '名前なし'}：${first.text.slice(0, 80)}${first.photo ? ' [写真あり]' : ''}` + (list.length > 1 ? `\nほか${list.length - 1}件` : '');
+      showNotificationRaw(title, body);
+    }
+
+    function getAudioCtx() {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      if (!audioCtx) audioCtx = new AC();
+      return audioCtx;
+    }
+
+    function toggleNotifySound() {
+      if (isSoundOn()) {
+        lsSet(SOUND_KEY, '');
+      } else {
+        let ctx = null;
+        try { ctx = getAudioCtx(); } catch (e) { ctx = null; }
+        if (!ctx) return alert('このブラウザは通知音に対応していません。');
+        lsSet(SOUND_KEY, '1');
+        playChime(); // 試し鳴らし（ボタン操作の中で鳴らすと、以後も鳴らせるようになる）
+      }
+      updateNotifyButtons();
+    }
+
+    // 外部ファイル不要の短いチャイム（Web Audio API）
+    function playChime() {
+      try {
+        const ctx = getAudioCtx();
+        if (!ctx) return;
+        if (ctx.state === 'suspended') Promise.resolve(ctx.resume()).catch(() => {});
+        const t0 = ctx.currentTime + 0.02;
+        [[880, 0], [1318.5, 0.16]].forEach(([freq, delay]) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.value = freq;
+          gain.gain.setValueAtTime(0.0001, t0 + delay);
+          gain.gain.exponentialRampToValueAtTime(0.25, t0 + delay + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.0001, t0 + delay + 0.45);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(t0 + delay);
+          osc.stop(t0 + delay + 0.5);
+        });
+      } catch (e) {}
+    }
+
+    // 再読み込み後は、最初の操作で音声を使えるようにしておく（ブラウザの自動再生制限対策）
+    ['pointerdown', 'keydown'].forEach(type => document.addEventListener(type, () => {
+      if (!isSoundOn()) return;
+      try {
+        const ctx = getAudioCtx();
+        if (ctx && ctx.state === 'suspended') Promise.resolve(ctx.resume()).catch(() => {});
+      } catch (e) {}
+    }, { passive: true }));
 
     /* ---------- Googleカレンダーへの予定追加（リンクを開くだけ・外部SDK不要） ---------- */
     function ymdCompact(d) {
@@ -2862,11 +3496,11 @@ function doPost(e) {
       let title = choice;
       let details = '中学数学 総合マスター Lab で学習しよう。';
       if (choice === 'unresolved') {
-        title = '復習：未解決の学習メモ';
-        const open = notesData.filter(n => !n.resolved).slice(0, 10);
+        title = '復習：未解決の質問';
+        const open = notesData.filter(n => n.entryType !== 'answer' && !n.resolved).slice(0, 10);
         details = open.length
-          ? '未解決のメモ：\n' + open.map(n => `・[${n.topic}] ${n.text.slice(0, 60)}`).join('\n')
-          : '未解決のメモはありません。テスト範囲の演習ドリルで復習しよう。';
+          ? '未解決の質問：\n' + open.map(n => `・[${n.topic}] ${n.text.slice(0, 60)}`).join('\n')
+          : '未解決の質問はありません。テスト範囲の演習ドリルで復習しよう。';
       }
       openCalendarUrl(buildCalendarUrl(title, date, details));
     }
@@ -2876,7 +3510,7 @@ function doPost(e) {
       if (!note) return;
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
-      openCalendarUrl(buildCalendarUrl(`復習：${note.topic}`, ymdInput(tomorrow), `学習メモの復習\n${note.text.slice(0, 300)}`));
+      openCalendarUrl(buildCalendarUrl(`復習：${note.topic}`, ymdInput(tomorrow), `質問の復習\n${note.text.slice(0, 300)}`));
     }
 
     /* ==================== 5. Gemini API 連携（現行モデル自動リトライ＆フォールバック） ==================== */
@@ -3111,6 +3745,9 @@ function doPost(e) {
       generateAutoDrill();
       drawProofSim();
       renderProofDrill();
+      const savedFilter = lsGet(QA_FILTER_KEY);
+      qaFilter = ['unanswered', 'answered'].includes(savedFilter) ? savedFilter : 'all';
+      setFavicon(false);
       renderNotes();
       applyGasUi();
       const tomorrow = new Date();
@@ -3118,8 +3755,12 @@ function doPost(e) {
       document.getElementById('calDate').value = ymdInput(tomorrow);
       setInterval(classPollTick, CLASS_POLL_MS);
       document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible') classPollTick();
+        if (document.visibilityState === 'visible') {
+          markQaSeen();
+          classPollTick();
+        }
       });
+      window.addEventListener('focus', markQaSeen);
       checkRemoteUpdate(false);
     });
   </script>
