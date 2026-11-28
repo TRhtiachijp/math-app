@@ -448,16 +448,16 @@
         </div>
 
         <div class="flex flex-wrap justify-between items-center gap-2">
-          <div class="flex flex-wrap items-center gap-x-3 gap-y-1 min-w-0">
-            <label id="gasSendWrap" class="hidden flex items-center gap-1.5 text-xs font-bold text-slate-700 cursor-pointer">
-              <input type="checkbox" id="gasSendChk" checked onchange="saveGasSendPref()" class="w-4 h-4 accent-sky-600">☁ クラス共有（先生の画面）にも送信
-            </label>
-            <span id="noteSyncStatus" class="text-xs font-bold whitespace-pre-line"></span>
+          <div class="flex flex-wrap items-center gap-2 min-w-0">
+            <input type="text" id="noteAuthorName" maxlength="30" placeholder="名前・出席番号（任意）" onchange="saveAuthorName()" class="w-48 max-w-full p-2 border border-slate-300 rounded-lg text-xs">
+            <span id="shareModeInfo" class="text-xs font-bold text-slate-500"></span>
+            <button id="shareSetupBtn" onclick="openApiModal()" class="hidden text-xs font-bold text-indigo-700 underline">⚙ 共有を設定</button>
           </div>
           <button onclick="addNote()" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-sm shadow-sm transition">
             ＋ メモを追加
           </button>
         </div>
+        <div id="noteSyncStatus" class="text-xs font-bold whitespace-pre-line"></div>
 
         <!-- Googleカレンダーに復習予定を追加 -->
         <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100 text-xs">
@@ -473,59 +473,22 @@
         </div>
       </div>
 
-      <!-- 先生とメモを共有 -->
-      <div class="bg-white p-4 md:p-5 rounded-xl shadow-sm border border-slate-200 space-y-3">
-        <div>
-          <h3 class="text-base font-bold text-slate-800">👩‍🏫 先生とメモを共有</h3>
-          <p class="text-xs text-slate-500 mt-0.5">メモはこの端末のブラウザにだけ保存され、自動では先生に届きません。生徒は「共有コード」を作ってチャットやメールで先生に送り、先生は右の欄に貼り付けて取り込みます。</p>
-        </div>
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <div class="bg-sky-50 border border-sky-200 rounded-xl p-3.5 space-y-2">
-            <div class="text-sm font-bold text-sky-900">📤 生徒：共有コードを作る</div>
-            <input type="text" id="shareStudentName" maxlength="30" placeholder="名前・出席番号（任意）" onchange="saveStudentName()" class="w-full p-2 border border-sky-200 rounded-lg text-sm bg-white">
-            <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs font-bold text-slate-700">
-              <label class="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" id="shareIncludePhotos" checked class="w-4 h-4 accent-sky-600">写真も含める</label>
-              <label class="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" id="shareUnresolvedOnly" class="w-4 h-4 accent-sky-600">未解決のメモだけ</label>
-            </div>
-            <div class="grid grid-cols-2 gap-2">
-              <button onclick="copyShareCode()" class="py-2 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-lg text-xs shadow-sm transition">📋 共有コードをコピー</button>
-              <button onclick="downloadShareCode()" class="py-2 bg-white hover:bg-sky-100 text-sky-800 border border-sky-300 font-bold rounded-lg text-xs transition">💾 ファイルで保存</button>
-            </div>
-            <textarea id="shareCodeOutput" rows="3" readonly onclick="this.select()" class="hidden w-full p-2 border border-sky-200 rounded-lg text-[11px] font-mono bg-white break-all"></textarea>
-            <div id="shareCodeStatus" class="hidden text-xs p-2 rounded-lg"></div>
-          </div>
-          <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3.5 space-y-2">
-            <div class="text-sm font-bold text-emerald-900">📥 先生：共有コードを取り込む</div>
-            <textarea id="importCodeInput" rows="4" placeholder="「MATHLAB1:」で始まる共有コードを貼り付け（複数人分をまとめて貼り付けてもOK）" class="w-full p-2 border border-emerald-200 rounded-lg text-[11px] font-mono bg-white"></textarea>
-            <div class="grid grid-cols-2 gap-2">
-              <button onclick="importNotesFromInput()" class="py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-xs shadow-sm transition">⬇ メモを取り込む</button>
-              <label for="importCodeFile" class="cursor-pointer text-center py-2 bg-white hover:bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold rounded-lg text-xs transition">📂 ファイルから取り込む</label>
-              <input type="file" id="importCodeFile" accept=".txt,text/plain" class="hidden" onchange="importNotesFromFile(this)">
-            </div>
-            <div id="importStatus" class="hidden text-xs p-2 rounded-lg"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- クラス共有ボード（Google Apps Script 連携・先生用） -->
+      <!-- 共有ボード（Google Apps Script 連携・接続している全員の投稿を表示） -->
       <div id="classBoardCard" class="bg-white p-4 md:p-5 rounded-xl shadow-sm border border-slate-200 space-y-3">
         <div class="flex flex-wrap justify-between items-center gap-2">
           <div class="min-w-0">
-            <h3 class="text-base font-bold text-slate-800">🏫 クラス共有ボード（先生用・自動更新）</h3>
+            <h3 class="text-base font-bold text-slate-800">🏫 共有ボード（全員・自動更新）</h3>
             <p id="classBoardStatus" class="text-xs text-slate-500"></p>
           </div>
           <div id="classBoardControls" class="flex flex-wrap items-center gap-x-3 gap-y-2">
             <label class="flex items-center gap-1.5 text-xs font-bold text-slate-700 cursor-pointer">
-              <input type="checkbox" id="teacherModeChk" onchange="setTeacherMode(this.checked)" class="w-4 h-4 accent-indigo-600">先生モード（投稿を表示）
-            </label>
-            <label class="flex items-center gap-1.5 text-xs font-bold text-slate-700 cursor-pointer">
-              <input type="checkbox" id="classAutoChk" checked onchange="setClassAuto(this.checked)" class="w-4 h-4 accent-indigo-600">自動更新（8秒ごと）
+              <input type="checkbox" id="classAutoChk" checked onchange="setClassAuto(this.checked)" class="w-4 h-4 accent-indigo-600">自動更新（6秒ごと）
             </label>
             <button onclick="refreshClassBoard(true)" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-xs shadow-sm transition">🔄 今すぐ更新</button>
           </div>
         </div>
         <div id="classBoardSetupHint" class="hidden text-xs bg-slate-50 border border-slate-200 rounded-lg p-3 text-slate-600 leading-relaxed">
-          右上の「⚙ 設定」で <strong>共有用 Google Apps Script（GAS）Webアプリ URL</strong> を登録すると、生徒が投稿したメモと写真がここに数秒で表示されます。未設定でも、上の「共有コード」で受け渡しできます。
+          右上の「⚙ 設定」で <strong>共有用 Google Apps Script（GAS）Webアプリ URL</strong> とルームIDを登録すると、「＋ メモを追加」したメモと写真が同じルームの全員の画面に数秒で表示されます。未設定の間は、メモはこの端末にだけ保存されます。
           <button onclick="openApiModal()" class="ml-1 font-bold text-indigo-700 underline">設定を開く</button>
         </div>
         <div id="classBoardList" class="space-y-2.5"></div>
@@ -2059,7 +2022,6 @@ function doPost(e) {
     /* ==================== 4. 学習メモボード ==================== */
     const NOTES_KEY = 'math_lab_notes';
     const STUDENT_NAME_KEY = 'math_lab_student_name';
-    const SHARE_PREFIX = 'MATHLAB1:';
     const MAX_PHOTO_CHARS = 700000;   // 写真1枚あたりの data URL 上限（約500KB）
     const TARGET_PHOTO_CHARS = 300000; // 圧縮の目標サイズ（約220KB）
     let pendingNotePhoto = null;
@@ -2189,8 +2151,9 @@ function doPost(e) {
         const saved = notesData[0];
         input.value = '';
         clearNotePhoto();
-        // ローカル保存が済んでからクラス共有へ送る（失敗してもメモは残る）
-        if (getGasConfig().url && document.getElementById('gasSendChk').checked) {
+        // ローカル保存が済んだら、共有URLが設定されていれば全員へ自動送信（失敗してもメモは残る）
+        if (getGasConfig().url) {
+          saveAuthorName();
           syncNoteToClass(saved.id);
         } else {
           setNoteSyncStatus('', '');
@@ -2222,7 +2185,7 @@ function doPost(e) {
       const target = notesData.find(n => n.id === id);
       if (!target) return;
       if (!AI_TUTOR_ENABLED) {
-        alert('AI解説は現在準備中（Coming Soon）です。\nわからない問題は、下の「先生とメモを共有」から共有コードを作って先生に送ってください。');
+        alert('AI解説は現在準備中（Coming Soon）です。\nわからない問題は、写真をつけて「＋ メモを追加」すると共有ボードで先生やクラスに共有できます（⚙ 設定で共有URLの登録が必要です）。');
         return;
       }
       goToTab('ai');
@@ -2299,7 +2262,7 @@ function doPost(e) {
       document.getElementById('notePhotoPreview').classList.add('hidden');
       document.getElementById('notePhotoPreviewImg').removeAttribute('src');
       document.getElementById('notePhotoInfo').textContent = '';
-      document.getElementById('notePhotoStatus').textContent = 'わからない問題の写真を添付できます（自動で縮小して保存）';
+      document.getElementById('notePhotoStatus').textContent = 'わからない問題の写真を添付できます（自動で縮小して保存。この画面で Ctrl+V / 長押し→ペーストでも貼り付け可）';
     }
 
     // 「📋 画像を貼り付け」ボタン（Async Clipboard API / ClipboardItem）
@@ -2376,14 +2339,14 @@ function doPost(e) {
         ? `<button onclick="sendNoteToAi(${id})" class="px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded-lg text-xs transition">🤖 AI解説</button>`
         : `<button onclick="sendNoteToAi(${id})" title="AI解説は準備中です" class="px-2.5 py-1.5 bg-slate-50 text-slate-400 border border-dashed border-slate-300 font-bold rounded-lg text-xs cursor-not-allowed">🤖 AI解説（準備中）</button>`;
 
-      // クラス共有（GAS）の送信状態。取り込んだ他人のメモ（from あり）は送らない
+      // 共有ボード（GAS）への送信状態。共有ボードから保存した他人のメモ（from あり）は送らない
       const gasOn = !!getGasConfig().url;
       const syncBtn = (n) => {
         if (n.from) return '';
-        if (n.synced === true) return `<span class="px-2 py-1 text-xs font-bold text-sky-700 bg-sky-50 rounded-lg">☁ 送信済</span>`;
-        if (!gasOn) return '';
-        if (n.synced === false) return `<button onclick="syncNoteToClass(${n.id})" class="px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 font-bold rounded-lg text-xs transition">⚠ 未送信・再送</button>`;
-        return `<button onclick="syncNoteToClass(${n.id})" class="px-2.5 py-1.5 bg-sky-50 hover:bg-sky-100 text-sky-700 font-bold rounded-lg text-xs transition">☁ 共有に送る</button>`;
+        if (syncingIds.has(n.id)) return `<span class="px-2 py-1 text-xs font-bold text-slate-600 bg-slate-100 rounded-lg">⏳ 送信中</span>`;
+        if (n.synced === true) return `<span class="px-2 py-1 text-xs font-bold text-sky-700 bg-sky-50 rounded-lg">☁ 全員へ共有済</span>`;
+        if (!gasOn) return `<span class="px-2 py-1 text-xs font-bold text-slate-500 bg-slate-50 rounded-lg" title="⚙ 設定で共有URLを登録すると全員に共有されます">📱 ローカル保存のみ</span>`;
+        return `<button onclick="syncNoteToClass(${n.id})" title="${n.synced === false ? '送信に失敗しました。押すと送り直します' : 'このメモはまだ共有されていません'}" class="px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 font-bold rounded-lg text-xs transition">⚠ ローカル保存のみ（${n.synced === false ? '未送信' : '未共有'}）・再送</button>`;
       };
 
       list.innerHTML = notesData.map(n => `
@@ -2443,23 +2406,7 @@ function doPost(e) {
       downloadText(notesToPlainText(), `math_notes_${new Date().toISOString().slice(0, 10)}.txt`);
     }
 
-    /* ---------- 先生との共有（共有コードの出力・取り込み） ---------- */
-    function utf8ToBase64(str) {
-      const bytes = new TextEncoder().encode(str);
-      let binary = '';
-      for (let i = 0; i < bytes.length; i += 0x8000) {
-        binary += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
-      }
-      return btoa(binary);
-    }
-
-    function base64ToUtf8(b64) {
-      const binary = atob(b64);
-      const bytes = new Uint8Array(binary.length);
-      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-      return new TextDecoder('utf-8', { fatal: true }).decode(bytes);
-    }
-
+    /* ---------- クリップボード・状態表示の共通処理 ---------- */
     function copyText(text) {
       if (navigator.clipboard && window.isSecureContext) {
         // 権限確認などで応答がない場合も3秒で手動コピーの案内に切り替える
@@ -2490,148 +2437,8 @@ function doPost(e) {
       el.textContent = message;
     }
 
-    function saveStudentName() {
-      const name = document.getElementById('shareStudentName').value.trim().slice(0, 30);
-      try { localStorage.setItem(STUDENT_NAME_KEY, name); } catch (e) {}
-    }
-
-    function buildShareCode() {
-      const includePhotos = document.getElementById('shareIncludePhotos').checked;
-      const unresolvedOnly = document.getElementById('shareUnresolvedOnly').checked;
-      const name = document.getElementById('shareStudentName').value.trim().slice(0, 30);
-      const list = notesData.filter(n => !unresolvedOnly || !n.resolved);
-      if (list.length === 0) return null;
-      const payload = {
-        app: 'math-lab-notes',
-        v: 1,
-        exportedAt: new Date().toISOString(),
-        from: name,
-        notes: list.map(n => ({
-          uid: n.uid,
-          topic: n.topic,
-          type: n.type,
-          text: n.text,
-          resolved: n.resolved,
-          createdAt: n.createdAt,
-          from: n.from || name,
-          photo: includePhotos && isSafeImageDataUrl(n.photo) ? n.photo : null
-        }))
-      };
-      return { code: SHARE_PREFIX + utf8ToBase64(JSON.stringify(payload)), count: list.length, name };
-    }
-
-    async function copyShareCode() {
-      saveStudentName();
-      const built = buildShareCode();
-      if (!built) return showStatus('shareCodeStatus', '共有するメモがありません。', 'warn');
-      const out = document.getElementById('shareCodeOutput');
-      out.value = built.code;
-      out.classList.remove('hidden');
-      const sizeKB = Math.round(built.code.length / 1024);
-      const big = built.code.length > 1500000;
-      try {
-        await copyText(built.code);
-        showStatus('shareCodeStatus',
-          `✅ 共有コード（${built.count}件・約${sizeKB}KB）をコピーしました。チャットやメールに貼り付けて先生に送ってください。` +
-          (big ? '\nサイズが大きいため送れない場合は、「写真も含める」を外すか「ファイルで保存」を使ってください。' : ''),
-          big ? 'warn' : 'ok');
-      } catch (e) {
-        out.focus();
-        out.select();
-        showStatus('shareCodeStatus', '自動でコピーできませんでした。上の欄を長押し（PCは Ctrl+C）してコピーしてください。', 'warn');
-      }
-    }
-
-    function downloadShareCode() {
-      saveStudentName();
-      const built = buildShareCode();
-      if (!built) return showStatus('shareCodeStatus', '共有するメモがありません。', 'warn');
-      const safeName = built.name.replace(/[\\/:*?"<>|\s]/g, '_');
-      downloadText(built.code, `math_notes_share_${safeName ? safeName + '_' : ''}${new Date().toISOString().slice(0, 10)}.txt`);
-      showStatus('shareCodeStatus', `💾 共有ファイル（${built.count}件）を保存しました。このファイルを先生に送ってください。`, 'ok');
-    }
-
-    function decodeSharePayload(b64) {
-      if (!/^[A-Za-z0-9+/]+={0,2}$/.test(b64)) throw new Error('broken');
-      const payload = JSON.parse(base64ToUtf8(b64));
-      if (!payload || payload.app !== 'math-lab-notes' || !Array.isArray(payload.notes)) throw new Error('not notes');
-      return payload;
-    }
-
-    function importNotes(text) {
-      const raw = String(text || '').replace(/\s+/g, '');
-      const segments = raw.split(SHARE_PREFIX).slice(1).filter(Boolean);
-      if (segments.length === 0) {
-        return showStatus('importStatus', '共有コードが見つかりません。「MATHLAB1:」で始まるコードを貼り付けてください。', 'error');
-      }
-
-      const existing = new Set(notesData.map(n => n.uid));
-      const incoming = [];
-      let dup = 0, invalid = 0, photoDropped = 0, brokenCodes = 0;
-
-      segments.forEach(seg => {
-        let payload;
-        try {
-          payload = decodeSharePayload(seg);
-        } catch (e) {
-          brokenCodes++;
-          return;
-        }
-        const sender = String(payload.from ?? '').slice(0, 30);
-        payload.notes.slice(0, 500).forEach(item => {
-          if (!item || typeof item !== 'object') { invalid++; return; }
-          const note = sanitizeNote({ ...item, from: item.from || sender }, false);
-          if (!note) { invalid++; return; }
-          if (item.photo && !note.photo) photoDropped++;
-          if (existing.has(note.uid)) { dup++; return; }
-          existing.add(note.uid);
-          incoming.push(note);
-        });
-      });
-
-      if (incoming.length === 0) {
-        if (brokenCodes === segments.length) {
-          return showStatus('importStatus', '共有コードを読み取れませんでした。コードが途中で切れていないか確認し、もう一度コピーしてください。', 'error');
-        }
-        return showStatus('importStatus', `新しいメモはありませんでした（重複 ${dup}件はスキップ）。`, 'warn');
-      }
-
-      const prev = notesData.slice();
-      let photosStripped = false;
-      notesData = [...incoming, ...prev];
-      if (!saveNotesStorage()) {
-        // 容量オーバー時は写真を除いて再挑戦
-        notesData = [...incoming.map(n => ({ ...n, photo: null })), ...prev];
-        photosStripped = incoming.some(n => n.photo);
-        if (!saveNotesStorage()) {
-          notesData = prev;
-          saveNotesStorage();
-          return showStatus('importStatus', '端末の保存容量が足りないため取り込めませんでした。不要なメモ（特に写真つき）を削除してから再度お試しください。', 'error');
-        }
-      }
-
-      const notes = [];
-      if (dup) notes.push(`重複 ${dup}件はスキップ`);
-      if (invalid) notes.push(`読み取れない ${invalid}件を除外`);
-      if (photoDropped) notes.push(`安全でない・大きすぎる写真 ${photoDropped}枚を除外`);
-      if (photosStripped) notes.push('保存容量不足のため写真を除いて取り込み');
-      if (brokenCodes) notes.push(`壊れたコード ${brokenCodes}件を無視`);
-      showStatus('importStatus', `✅ ${incoming.length}件のメモを取り込みました。${notes.length ? '（' + notes.join('、') + '）' : ''}`, notes.length ? 'warn' : 'ok');
-      document.getElementById('importCodeInput').value = '';
-    }
-
-    function importNotesFromInput() {
-      importNotes(document.getElementById('importCodeInput').value);
-    }
-
-    function importNotesFromFile(inputEl) {
-      const file = inputEl.files && inputEl.files[0];
-      inputEl.value = '';
-      if (!file) return;
-      if (file.size > 20 * 1024 * 1024) return showStatus('importStatus', 'ファイルが大きすぎます（20MBまで）。', 'error');
-      file.text()
-        .then(importNotes)
-        .catch(() => showStatus('importStatus', 'ファイルを読み込めませんでした。', 'error'));
+    function saveAuthorName() {
+      lsSet(STUDENT_NAME_KEY, document.getElementById('noteAuthorName').value.trim().slice(0, 30));
     }
 
     function escapeHtml(str) {
@@ -2641,20 +2448,24 @@ function doPost(e) {
     /* ==================== 4-B. クラス共有（Google Apps Script 連携） ==================== */
     const GAS_URL_KEY = 'math_lab_gas_url';
     const GAS_ROOM_KEY = 'math_lab_gas_room';
-    const GAS_SEND_KEY = 'math_lab_gas_send';
-    const TEACHER_MODE_KEY = 'math_lab_teacher_mode';
     const CLASS_AUTO_KEY = 'math_lab_class_auto';
     const DEFAULT_ROOM = 'math-class';
-    const CLASS_POLL_MS = 8000;
+    const CLASS_POLL_MS = 6000;
+    const CLASS_MAX_BACKOFF_MS = 60000;
     const CLASS_MAX_ITEMS = 300;
 
-    let classNotes = [];          // 先生側で取得した投稿（メモリ上のみ。端末の保存容量を圧迫しない）
+    let classNotes = [];          // 共有ボードで取得した投稿（メモリ上のみ。端末の保存容量を圧迫しない）
     let classSince = 1;           // 取得済みの最終行（シートの1行目は見出し）
     let classFetching = false;
     let classLoadedOnce = false;
     let classLastUpdated = null;
     let classError = '';
     let classConfigKey = '';
+    let classFailCount = 0;       // 連続失敗回数（失敗が続いたら取得間隔をのばす）
+    let classNextPollAt = 0;
+    let classRefreshQueued = false;
+    let classFetchPromise = Promise.resolve();
+    const syncingIds = new Set(); // 送信中のメモ（画面表示用。保存はしない）
 
     function lsGet(key) {
       try { return localStorage.getItem(key) || ''; } catch (e) { return ''; }
@@ -2680,10 +2491,6 @@ function doPost(e) {
       const url = lsGet(GAS_URL_KEY);
       const room = lsGet(GAS_ROOM_KEY);
       return { url: isValidGasUrl(url) ? url : '', room: isValidRoom(room) ? room : DEFAULT_ROOM };
-    }
-
-    function isTeacherMode() {
-      return lsGet(TEACHER_MODE_KEY) === '1';
     }
 
     function isClassAuto() {
@@ -2749,8 +2556,10 @@ function doPost(e) {
       const cfg = getGasConfig();
       if (!cfg.url) return alert('クラス共有のGAS URLが未設定です。右上の「⚙ 設定」から登録してください。');
       const note = notesData.find(n => n.id === id);
-      if (!note || note.from) return;
-      setNoteSyncStatus('☁ クラス共有に送信中...', 'info');
+      if (!note || note.from || syncingIds.has(id)) return;
+      syncingIds.add(id);
+      renderNotes();
+      setNoteSyncStatus('⏳ 共有ボードに送信中...', 'info');
       try {
         const data = await gasPost(cfg, {
           action: 'post',
@@ -2767,16 +2576,15 @@ function doPost(e) {
           }
         });
         note.synced = true;
-        setNoteSyncStatus(data.duplicate ? '☁ すでに先生の画面に届いています。' : '☁ 先生の画面（クラス共有）に送信しました。', 'ok');
+        setNoteSyncStatus(data.duplicate ? '☁ すでに全員へ共有されています。' : `☁ 全員へ共有しました（ルーム：${cfg.room}）。`, 'ok');
+        refreshClassBoard(true); // 自分の共有ボードにもすぐ反映
       } catch (err) {
         note.synced = false;
-        setNoteSyncStatus(`⚠ メモはこの端末に保存済みです。クラス共有への送信に失敗しました：${gasErrorMessage(err)}\n（メモの「⚠ 未送信・再送」から送り直せます）`, 'error');
+        setNoteSyncStatus(`⚠ メモはこの端末に保存済みです。共有ボードへの送信に失敗しました：${gasErrorMessage(err)}\n（メモの「再送」ボタンから送り直せます）`, 'error');
+      } finally {
+        syncingIds.delete(id);
       }
       saveNotesStorage();
-    }
-
-    function saveGasSendPref() {
-      lsSet(GAS_SEND_KEY, document.getElementById('gasSendChk').checked ? '1' : '0');
     }
 
     function saveGasConfig() {
@@ -2825,18 +2633,6 @@ function doPost(e) {
         .catch(() => showStatus('gasConfigStatus', 'コピーできませんでした。リポジトリの index.html 内「gasCodeTemplate」のコードを使ってください。', 'warn'));
     }
 
-    function setTeacherMode(on) {
-      lsSet(TEACHER_MODE_KEY, on ? '1' : '');
-      document.getElementById('teacherModeChk').checked = !!on;
-      if (!on) {
-        classNotes = [];
-        classSince = 1;
-        classLoadedOnce = false;
-      }
-      renderClassBoard();
-      if (on) refreshClassBoard(true);
-    }
-
     function setClassAuto(on) {
       lsSet(CLASS_AUTO_KEY, on ? '' : '0');
       document.getElementById('classAutoChk').checked = !!on;
@@ -2854,20 +2650,44 @@ function doPost(e) {
         classLoadedOnce = false;
         classError = '';
         classLastUpdated = null;
+        classFailCount = 0;
+        classNextPollAt = 0;
       }
-      document.getElementById('gasSendWrap').classList.toggle('hidden', !cfg.url);
-      document.getElementById('gasSendChk').checked = lsGet(GAS_SEND_KEY) !== '0';
-      document.getElementById('teacherModeChk').checked = isTeacherMode();
+      const info = document.getElementById('shareModeInfo');
+      info.textContent = cfg.url
+        ? `☁ 追加すると共有ボード（ルーム：${cfg.room}）の全員に自動で共有されます`
+        : '📱 共有URLが未設定のため、この端末にだけ保存されます';
+      info.className = `text-xs font-bold ${cfg.url ? 'text-sky-700' : 'text-slate-500'}`;
+      document.getElementById('shareSetupBtn').classList.toggle('hidden', !!cfg.url);
       document.getElementById('classAutoChk').checked = isClassAuto();
       updateApiUi();
       renderNotes();
       renderClassBoard();
+      const notesView = document.getElementById('notesModule');
+      if (cfg.url && notesView && !notesView.classList.contains('hidden')) refreshClassBoard(true);
     }
 
     async function refreshClassBoard(manual) {
       const cfg = getGasConfig();
-      if (!cfg.url || !isTeacherMode() || classFetching) return;
+      if (!cfg.url) return;
+      if (classFetching) {
+        // 取得中に「今すぐ更新」や送信完了が来たら、終わり次第もう一度取得する
+        if (manual === true) classRefreshQueued = true;
+        return classFetchPromise;
+      }
+      classRefreshQueued = false;
       const key = classConfigKey;
+      classFetchPromise = doRefreshClassBoard(cfg, key, manual).finally(() => {
+        classFetching = false;
+        if (classRefreshQueued && key === classConfigKey) {
+          classRefreshQueued = false;
+          return refreshClassBoard(true);
+        }
+      });
+      return classFetchPromise;
+    }
+
+    async function doRefreshClassBoard(cfg, key, manual) {
       classFetching = true;
       if (manual) renderClassBoard('取得中...');
       try {
@@ -2907,11 +2727,16 @@ function doPost(e) {
         classLoadedOnce = true;
         classLastUpdated = new Date();
         classError = '';
+        classFailCount = 0;
+        classNextPollAt = 0;
         // 変化がなければ一覧（写真）は描き直さず、状態表示だけ更新する
         renderClassBoard('', wasLoaded && !added && !expired && !hadError && !manual);
       } catch (err) {
         if (key === classConfigKey) {
           classError = gasErrorMessage(err);
+          // 失敗が続くときは 12秒→24秒→…最大60秒 と間隔をのばし、GASへの負荷を抑える
+          classFailCount++;
+          classNextPollAt = Date.now() + Math.min(CLASS_POLL_MS * 2 ** classFailCount, CLASS_MAX_BACKOFF_MS);
           renderClassBoard();
         }
       } finally {
@@ -2921,19 +2746,14 @@ function doPost(e) {
 
     function renderClassBoard(statusOverride, statusOnly) {
       const cfg = getGasConfig();
-      const teacher = isTeacherMode();
       const status = document.getElementById('classBoardStatus');
       const list = document.getElementById('classBoardList');
       document.getElementById('classBoardSetupHint').classList.toggle('hidden', !!cfg.url);
       document.getElementById('classBoardControls').classList.toggle('hidden', !cfg.url);
 
       if (!cfg.url) {
-        status.textContent = 'クラス共有は未設定です。';
-        list.innerHTML = '';
-        return;
-      }
-      if (!teacher) {
-        status.textContent = `ルーム「${cfg.room}」に接続中。先生の端末では「先生モード」をオンにすると生徒の投稿が表示されます。`;
+        status.textContent = '共有ボードは未設定です。';
+        status.className = 'text-xs text-slate-500';
         list.innerHTML = '';
         return;
       }
@@ -2948,16 +2768,18 @@ function doPost(e) {
       if (statusOnly) return;
 
       if (classNotes.length === 0) {
-        list.innerHTML = `<div class="p-6 rounded-xl border border-dashed border-slate-300 text-center text-sm text-slate-400">${classLoadedOnce ? 'まだ投稿はありません。生徒がメモを送信すると、ここに数秒で表示されます。' : '読み込み中...'}</div>`;
+        list.innerHTML = `<div class="p-6 rounded-xl border border-dashed border-slate-300 text-center text-sm text-slate-400">${classLoadedOnce ? 'まだ投稿はありません。「＋ メモを追加」すると、ここに数秒で表示されます。' : '読み込み中...'}</div>`;
         return;
       }
 
       const now = Date.now();
+      const mine = new Set(notesData.filter(n => !n.from).map(n => n.uid));
       list.innerHTML = classNotes.map(n => `
         <div class="p-3.5 rounded-xl border ${n.newUntil > now ? 'border-emerald-400 bg-emerald-50/60' : 'border-slate-200 bg-slate-50'} flex flex-col md:flex-row justify-between gap-3">
           <div class="space-y-1.5 flex-1 min-w-0">
             <div class="flex flex-wrap items-center gap-2">
               ${n.newUntil > now ? '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-600 text-white">NEW</span>' : ''}
+              ${mine.has(n.uid) ? '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-600 text-white">あなた</span>' : ''}
               <span class="text-xs font-bold px-2 py-0.5 rounded bg-sky-100 text-sky-800">👤 ${escapeHtml(n.from || '名前なし')}</span>
               <span class="text-xs font-bold px-2 py-0.5 rounded bg-indigo-50 text-indigo-700">${escapeHtml(n.topic)}</span>
               <span class="text-xs font-bold px-2 py-0.5 rounded ${n.type === 'question' ? 'bg-rose-50 text-rose-700' : 'bg-amber-50 text-amber-800'}">${n.type === 'question' ? '❓ 質問' : '💡 ポイント'}</span>
@@ -2971,7 +2793,7 @@ function doPost(e) {
               </button>` : ''}
           </div>
           <div class="flex flex-wrap items-start gap-1.5 shrink-0">
-            <button onclick="saveClassNoteLocally(${n.id})" class="px-2.5 py-1.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 font-bold rounded-lg text-xs transition">📥 自分のメモに保存</button>
+            ${mine.has(n.uid) ? '' : `<button onclick="saveClassNoteLocally(${n.id})" class="px-2.5 py-1.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 font-bold rounded-lg text-xs transition">📥 自分のメモに保存</button>`}
           </div>
         </div>
       `).join('');
@@ -3002,6 +2824,7 @@ function doPost(e) {
         if (expired) renderClassBoard();
         return;
       }
+      if (Date.now() < classNextPollAt) return; // 通信エラーが続いている間は間隔をあける
       refreshClassBoard(false);
     }
 
@@ -3278,7 +3101,10 @@ function doPost(e) {
       try { localStorage.removeItem('github_pat'); localStorage.removeItem('github_repo'); } catch (e) {}
       updateApiUi();
       applyAiAvailability();
-      try { document.getElementById('shareStudentName').value = localStorage.getItem(STUDENT_NAME_KEY) || ''; } catch (e) {}
+      document.getElementById('noteAuthorName').value = lsGet(STUDENT_NAME_KEY);
+      // 旧バージョンの設定（先生モード・送信ON/OFF）は不要になったので消去
+      lsSet('math_lab_teacher_mode', '');
+      lsSet('math_lab_gas_send', '');
       updateParabola();
       drawMovingScene();
       updateParaSim();
