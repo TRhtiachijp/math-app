@@ -65,8 +65,9 @@
       <span>📝 学習メモ</span>
       <span id="unresolvedBadge" class="hidden bg-rose-500 text-white text-xs px-1.5 py-0.5 rounded-full">0</span>
     </button>
-    <button onclick="switchTab('ai', this)" class="tab-btn px-3.5 py-2 rounded-lg font-bold text-sm whitespace-nowrap text-slate-600 hover:bg-slate-100 transition">
-      🤖 AIチューター・全単元類題
+    <button onclick="switchTab('ai', this)" class="tab-btn px-3.5 py-2 rounded-lg font-bold text-sm whitespace-nowrap text-slate-600 hover:bg-slate-100 transition flex items-center gap-1.5">
+      <span>🤖 AIチューター・全単元類題</span>
+      <span id="aiSoonBadge" class="bg-amber-400 text-amber-950 text-[10px] px-1.5 py-0.5 rounded-full">準備中</span>
     </button>
   </nav>
 
@@ -399,7 +400,10 @@
     <section id="notesModule" class="module-view hidden space-y-4">
       <div class="bg-white p-4 md:p-5 rounded-xl shadow-sm border border-slate-200 space-y-3">
         <div class="flex flex-wrap justify-between items-center gap-2">
-          <h2 class="text-lg font-bold text-slate-800">📝 リアルタイム学習メモ・質問ボード</h2>
+          <div>
+            <h2 class="text-lg font-bold text-slate-800">📝 リアルタイム学習メモ・質問ボード</h2>
+            <p id="notesStorageInfo" class="text-[11px] text-slate-400"></p>
+          </div>
           <div class="flex gap-2">
             <button onclick="copyAllNotes()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-xs transition">
               📋 すべてコピー
@@ -423,12 +427,63 @@
             <option value="question">❓ 分からない・質問</option>
             <option value="point">💡 重要ポイント</option>
           </select>
-          <input type="text" id="noteInput" placeholder="分からない問題や気づきを入力..." onkeydown="if(event.key==='Enter') addNote()" class="md:col-span-2 p-2.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+          <input type="text" id="noteInput" maxlength="2000" placeholder="分からない問題や気づきを入力..." onkeydown="if(event.key==='Enter' && !event.isComposing) addNote()" class="md:col-span-2 p-2.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
         </div>
+
+        <!-- わからない問題の写真添付 -->
+        <div class="flex flex-wrap items-center gap-2">
+          <label for="notePhotoCamera" class="cursor-pointer px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-xs transition">📷 写真を撮る</label>
+          <input type="file" id="notePhotoCamera" accept="image/*" capture="environment" class="hidden" onchange="handleNotePhoto(this)">
+          <label for="notePhotoFile" class="cursor-pointer px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-xs transition">🖼️ 画像を選ぶ</label>
+          <input type="file" id="notePhotoFile" accept="image/*" class="hidden" onchange="handleNotePhoto(this)">
+          <span id="notePhotoStatus" class="text-xs text-slate-500">わからない問題の写真を添付できます（自動で縮小して保存）</span>
+        </div>
+        <div id="notePhotoPreview" class="hidden flex flex-wrap items-start gap-3 bg-slate-50 border border-slate-200 rounded-lg p-2">
+          <img id="notePhotoPreviewImg" alt="添付写真のプレビュー" class="max-h-32 max-w-[60%] rounded border border-slate-300 object-contain bg-white">
+          <div class="space-y-1">
+            <div id="notePhotoInfo" class="text-xs text-slate-600"></div>
+            <button onclick="clearNotePhoto()" class="px-2.5 py-1 text-xs font-bold text-rose-600 hover:bg-rose-50 rounded transition">✕ 写真を削除</button>
+          </div>
+        </div>
+
         <div class="flex justify-end">
           <button onclick="addNote()" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-sm shadow-sm transition">
             ＋ メモを追加
           </button>
+        </div>
+      </div>
+
+      <!-- 先生とメモを共有 -->
+      <div class="bg-white p-4 md:p-5 rounded-xl shadow-sm border border-slate-200 space-y-3">
+        <div>
+          <h3 class="text-base font-bold text-slate-800">👩‍🏫 先生とメモを共有</h3>
+          <p class="text-xs text-slate-500 mt-0.5">メモはこの端末のブラウザにだけ保存され、自動では先生に届きません。生徒は「共有コード」を作ってチャットやメールで先生に送り、先生は右の欄に貼り付けて取り込みます。</p>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div class="bg-sky-50 border border-sky-200 rounded-xl p-3.5 space-y-2">
+            <div class="text-sm font-bold text-sky-900">📤 生徒：共有コードを作る</div>
+            <input type="text" id="shareStudentName" maxlength="30" placeholder="名前・出席番号（任意）" onchange="saveStudentName()" class="w-full p-2 border border-sky-200 rounded-lg text-sm bg-white">
+            <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs font-bold text-slate-700">
+              <label class="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" id="shareIncludePhotos" checked class="w-4 h-4 accent-sky-600">写真も含める</label>
+              <label class="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" id="shareUnresolvedOnly" class="w-4 h-4 accent-sky-600">未解決のメモだけ</label>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <button onclick="copyShareCode()" class="py-2 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-lg text-xs shadow-sm transition">📋 共有コードをコピー</button>
+              <button onclick="downloadShareCode()" class="py-2 bg-white hover:bg-sky-100 text-sky-800 border border-sky-300 font-bold rounded-lg text-xs transition">💾 ファイルで保存</button>
+            </div>
+            <textarea id="shareCodeOutput" rows="3" readonly onclick="this.select()" class="hidden w-full p-2 border border-sky-200 rounded-lg text-[11px] font-mono bg-white break-all"></textarea>
+            <div id="shareCodeStatus" class="hidden text-xs p-2 rounded-lg"></div>
+          </div>
+          <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3.5 space-y-2">
+            <div class="text-sm font-bold text-emerald-900">📥 先生：共有コードを取り込む</div>
+            <textarea id="importCodeInput" rows="4" placeholder="「MATHLAB1:」で始まる共有コードを貼り付け（複数人分をまとめて貼り付けてもOK）" class="w-full p-2 border border-emerald-200 rounded-lg text-[11px] font-mono bg-white"></textarea>
+            <div class="grid grid-cols-2 gap-2">
+              <button onclick="importNotesFromInput()" class="py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-xs shadow-sm transition">⬇ メモを取り込む</button>
+              <label for="importCodeFile" class="cursor-pointer text-center py-2 bg-white hover:bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold rounded-lg text-xs transition">📂 ファイルから取り込む</label>
+              <input type="file" id="importCodeFile" accept=".txt,text/plain" class="hidden" onchange="importNotesFromFile(this)">
+            </div>
+            <div id="importStatus" class="hidden text-xs p-2 rounded-lg"></div>
+          </div>
         </div>
       </div>
 
@@ -437,6 +492,23 @@
 
     <!-- ==================== 5. Gemini AI チューター＆全単元問題作成 ==================== -->
     <section id="aiModule" class="module-view hidden space-y-4">
+      <!-- 保留中の案内（AI_TUTOR_ENABLED が false の間だけ表示） -->
+      <div id="aiComingSoon" class="bg-white p-6 md:p-10 rounded-xl shadow-sm border border-slate-200 text-center space-y-4">
+        <div class="text-5xl">🚧</div>
+        <span class="inline-block text-xs font-bold bg-amber-100 text-amber-800 px-3 py-1 rounded-full">Coming Soon（準備中）</span>
+        <h2 class="text-xl font-bold text-slate-800">AIチューター・類題作成は準備中です</h2>
+        <p class="text-sm text-slate-600 leading-relaxed max-w-xl mx-auto">
+          AIによるステップ解説と予想問題の自動作成は、現在一時お休みしています。再開までは下の機能でテスト対策を進めましょう。わからない問題は、学習メモに写真をつけて先生に共有できます。
+        </p>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 max-w-2xl mx-auto">
+          <button onclick="goToTab('parabolaArea'); switchParaAreaMode('drill')" class="p-3 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 font-bold rounded-xl text-xs transition">📐 放物線と面積<br>無限類題ドリル</button>
+          <button onclick="goToTab('proof'); switchProofMode('drill')" class="p-3 bg-sky-50 hover:bg-sky-100 border border-sky-200 text-sky-800 font-bold rounded-xl text-xs transition">🔷 平行四辺形・ひし形<br>証明演習ドリル</button>
+          <button onclick="goToTab('notes')" class="p-3 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-800 font-bold rounded-xl text-xs transition">📝 わからない問題を<br>写真つきで先生に共有</button>
+        </div>
+      </div>
+
+      <!-- AI機能本体（保留中は非表示。再開時は AI_TUTOR_ENABLED を true にする） -->
+      <div id="aiFeatureArea" class="hidden space-y-4">
       <div id="aiNoKeyBanner" class="bg-amber-50 border border-amber-300 p-4 rounded-xl flex flex-wrap justify-between items-center gap-3">
         <div class="text-sm text-amber-900">
           <strong>Gemini APIキーが未設定です：</strong> AI解説や類題作成を使うには右上のボタンからAPIキーを設定してください。
@@ -493,9 +565,21 @@
           <div id="aiProblemOutput" class="hidden space-y-2.5 max-h-[420px] overflow-y-auto"></div>
         </div>
       </div>
+      </div>
     </section>
 
   </main>
+
+  <!-- 添付写真の拡大表示 -->
+  <div id="photoViewer" class="hidden fixed inset-0 bg-slate-900/80 z-50 flex items-center justify-center p-4" onclick="closePhotoViewer()">
+    <div class="max-w-3xl w-full space-y-2" onclick="event.stopPropagation()">
+      <div class="flex justify-between items-start gap-3">
+        <p id="photoViewerCaption" class="text-white text-sm font-bold break-words whitespace-pre-wrap min-w-0"></p>
+        <button onclick="closePhotoViewer()" class="text-white text-3xl leading-none font-bold px-2 shrink-0" aria-label="閉じる">&times;</button>
+      </div>
+      <img id="photoViewerImg" alt="添付写真" class="w-full max-h-[80vh] object-contain rounded-lg bg-white">
+    </div>
+  </div>
 
   <!-- APIキー設定モーダル -->
   <div id="apiModal" class="hidden fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4 overflow-y-auto">
@@ -1219,16 +1303,12 @@
 
     function sendDrillToNotes() {
       if (!currentDrillData) return;
-      notesData.unshift({
-        id: Date.now(),
+      const ok = addNoteRecord({
         topic: currentDrillData.topic,
         type: 'question',
-        text: `${currentDrillData.title}：${currentDrillData.question.replace(/\n/g, ' ')}`,
-        resolved: false,
-        createdAt: new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })
+        text: `${currentDrillData.title}：${currentDrillData.question.replace(/\n/g, ' ')}`
       });
-      saveNotesStorage();
-      alert('学習メモボードにこの問題を追加しました！');
+      if (ok) alert('学習メモボードにこの問題を追加しました！');
     }
 
     /* ==================== 3. 平行四辺形・ひし形 合同の証明 ==================== */
@@ -1776,41 +1856,145 @@
 
     function sendProofToNotes() {
       const item = PROOF_DRILLS[proofDrillIndex];
-      notesData.unshift({
-        id: Date.now(),
+      const ok = addNoteRecord({
         topic: '平行四辺形・ひし形の証明',
         type: 'question',
-        text: `${item.title}：${item.question.replace(/\n/g, ' ')}`,
-        resolved: false,
-        createdAt: new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })
+        text: `${item.title}：${item.question.replace(/\n/g, ' ')}`
       });
-      saveNotesStorage();
-      alert('学習メモボードにこの問題を追加しました！');
+      if (ok) alert('学習メモボードにこの問題を追加しました！');
     }
 
     /* ==================== 4. 学習メモボード ==================== */
-    let notesData = JSON.parse(localStorage.getItem('math_lab_notes') || '[]');
+    const NOTES_KEY = 'math_lab_notes';
+    const STUDENT_NAME_KEY = 'math_lab_student_name';
+    const SHARE_PREFIX = 'MATHLAB1:';
+    const MAX_PHOTO_CHARS = 700000;   // 写真1枚あたりの data URL 上限（約500KB）
+    const TARGET_PHOTO_CHARS = 300000; // 圧縮の目標サイズ（約220KB）
+    let pendingNotePhoto = null;
+    let lastNoteId = 0;
+
+    // 画像は data:image/(jpeg|png|webp);base64 のみ許可（javascript: 等を排除）
+    function isSafeImageDataUrl(s) {
+      return typeof s === 'string' && s.length <= MAX_PHOTO_CHARS &&
+        /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/]+={0,2}$/.test(s);
+    }
+
+    function nextNoteId() {
+      lastNoteId = Math.max(Date.now(), lastNoteId + 1);
+      return lastNoteId;
+    }
+
+    function makeNoteUid() {
+      return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+    }
+
+    function hashText(str) {
+      let h = 5381;
+      for (let i = 0; i < str.length; i++) h = ((h << 5) + h + str.charCodeAt(i)) >>> 0;
+      return h.toString(36);
+    }
+
+    function nowStamp() {
+      return new Date().toLocaleString('ja-JP', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
+
+    // 保存データ・共有データを安全な形にそろえる（不正な値は捨てる）
+    function sanitizeNote(raw, keepId) {
+      if (!raw || typeof raw !== 'object') return null;
+      const text = String(raw.text ?? '').trim().slice(0, 2000);
+      const photo = isSafeImageDataUrl(raw.photo) ? raw.photo : null;
+      if (!text && !photo) return null;
+      const note = {
+        id: keepId && Number.isSafeInteger(raw.id) && raw.id > 0 ? raw.id : nextNoteId(),
+        uid: '',
+        topic: String(raw.topic ?? 'その他').slice(0, 40) || 'その他',
+        type: raw.type === 'point' ? 'point' : 'question',
+        text: text || '（写真の問題）',
+        resolved: raw.resolved === true,
+        createdAt: String(raw.createdAt ?? '').slice(0, 40),
+        from: String(raw.from ?? '').trim().slice(0, 30),
+        photo
+      };
+      if (typeof raw.uid === 'string' && /^[A-Za-z0-9_-]{1,64}$/.test(raw.uid)) {
+        note.uid = raw.uid;
+      } else if (keepId && Number.isSafeInteger(raw.id)) {
+        note.uid = 'legacy-' + raw.id;
+      } else {
+        note.uid = 'h-' + hashText(`${note.from}|${note.createdAt}|${note.topic}|${note.text}`);
+      }
+      return note;
+    }
+
+    function loadNotes() {
+      let arr = [];
+      try {
+        arr = JSON.parse(localStorage.getItem(NOTES_KEY) || '[]');
+      } catch (e) {
+        arr = [];
+      }
+      if (!Array.isArray(arr)) return [];
+      const seen = new Set();
+      return arr.map(n => sanitizeNote(n, true)).filter(n => {
+        if (!n || seen.has(n.id)) return false;
+        seen.add(n.id);
+        return true;
+      });
+    }
+
+    let notesData = loadNotes();
+    lastNoteId = notesData.reduce((m, n) => Math.max(m, n.id), 0);
 
     function saveNotesStorage() {
-      localStorage.setItem('math_lab_notes', JSON.stringify(notesData));
+      let ok = true;
+      try {
+        localStorage.setItem(NOTES_KEY, JSON.stringify(notesData));
+      } catch (e) {
+        ok = false;
+      }
       renderNotes();
+      return ok;
+    }
+
+    // 保存に失敗（容量オーバー）したら変更前に戻す
+    function commitNotes(prev, failMsg) {
+      if (saveNotesStorage()) return true;
+      notesData = prev;
+      saveNotesStorage();
+      alert(failMsg || '端末の保存容量が足りないため保存できませんでした。写真つきの古いメモや解決済みのメモを削除してから、もう一度お試しください。');
+      return false;
+    }
+
+    function addNoteRecord(fields) {
+      const prev = notesData.slice();
+      notesData.unshift({
+        id: nextNoteId(),
+        uid: makeNoteUid(),
+        topic: 'その他',
+        type: 'question',
+        resolved: false,
+        createdAt: nowStamp(),
+        from: '',
+        photo: null,
+        ...fields
+      });
+      return commitNotes(prev);
     }
 
     function addNote() {
       const input = document.getElementById('noteInput');
       const text = input.value.trim();
-      if (!text) return;
+      if (!text && !pendingNotePhoto) return alert('メモの内容を入力するか、写真を添付してください。');
 
-      notesData.unshift({
-        id: Date.now(),
+      const ok = addNoteRecord({
         topic: document.getElementById('noteTopic').value,
         type: document.getElementById('noteType').value,
-        text: text,
-        resolved: false,
-        createdAt: new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })
+        text: text || '（写真の問題）',
+        photo: pendingNotePhoto
       });
-      input.value = '';
-      saveNotesStorage();
+      if (ok) {
+        input.value = '';
+        clearNotePhoto();
+      }
     }
 
     function toggleNoteResolved(id) {
@@ -1828,7 +2012,7 @@
       if (!target) return;
       const updated = prompt('メモ内容を編集してください：', target.text);
       if (updated !== null && updated.trim() !== '') {
-        target.text = updated.trim();
+        target.text = updated.trim().slice(0, 2000);
         saveNotesStorage();
       }
     }
@@ -1836,11 +2020,98 @@
     function sendNoteToAi(id) {
       const target = notesData.find(n => n.id === id);
       if (!target) return;
-      const aiTabBtn = document.querySelector('.tab-btn[onclick^="switchTab(\'ai\'"]');
-      switchTab('ai', aiTabBtn);
+      if (!AI_TUTOR_ENABLED) {
+        alert('AI解説は現在準備中（Coming Soon）です。\nわからない問題は、下の「先生とメモを共有」から共有コードを作って先生に送ってください。');
+        return;
+      }
+      goToTab('ai');
       document.getElementById('aiQuestionInput').value = `【単元：${target.topic}】\n${target.text}`;
       askGeminiTutor();
     }
+
+    /* ---------- 写真の添付（Canvasで縮小・JPEG圧縮） ---------- */
+    function loadImageFromFile(file) {
+      return new Promise((resolve, reject) => {
+        const url = URL.createObjectURL(file);
+        const img = new Image();
+        img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+        img.onerror = () => {
+          URL.revokeObjectURL(url);
+          reject(new Error('画像を読み込めませんでした（このブラウザが対応していない形式の可能性があります）。JPEGやPNGの写真でお試しください。'));
+        };
+        img.src = url;
+      });
+    }
+
+    function compressImage(img, maxSide, quality) {
+      const iw = img.naturalWidth || img.width;
+      const ih = img.naturalHeight || img.height;
+      const scale = Math.min(1, maxSide / Math.max(iw, ih));
+      const w = Math.max(1, Math.round(iw * scale));
+      const h = Math.max(1, Math.round(ih * scale));
+      const canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#ffffff'; // PNGの透明部分を白にする
+      ctx.fillRect(0, 0, w, h);
+      ctx.drawImage(img, 0, 0, w, h);
+      return canvas.toDataURL('image/jpeg', quality);
+    }
+
+    async function handleNotePhoto(inputEl) {
+      const file = inputEl.files && inputEl.files[0];
+      inputEl.value = ''; // 同じ写真を選び直せるようにする
+      if (!file) return;
+      if (file.type && !file.type.startsWith('image/')) return alert('画像ファイルを選んでください。');
+      if (file.size > 30 * 1024 * 1024) return alert('画像が大きすぎます（30MBまで）。');
+
+      const status = document.getElementById('notePhotoStatus');
+      status.textContent = '写真を縮小しています...';
+      try {
+        const img = await loadImageFromFile(file);
+        let dataUrl = null;
+        for (const [side, quality] of [[800, 0.7], [640, 0.6], [480, 0.5]]) {
+          dataUrl = compressImage(img, side, quality);
+          if (dataUrl.length <= TARGET_PHOTO_CHARS) break;
+        }
+        if (!isSafeImageDataUrl(dataUrl)) throw new Error('写真の圧縮に失敗しました。別の写真でお試しください。');
+
+        pendingNotePhoto = dataUrl;
+        document.getElementById('notePhotoPreviewImg').src = dataUrl;
+        document.getElementById('notePhotoInfo').textContent = `縮小後 約${Math.round(dataUrl.length * 0.75 / 1024)}KB`;
+        document.getElementById('notePhotoPreview').classList.remove('hidden');
+        status.textContent = '写真を添付しました（「＋ メモを追加」で保存されます）';
+      } catch (err) {
+        clearNotePhoto();
+        alert(err.message || '写真を読み込めませんでした。');
+      }
+    }
+
+    function clearNotePhoto() {
+      pendingNotePhoto = null;
+      document.getElementById('notePhotoPreview').classList.add('hidden');
+      document.getElementById('notePhotoPreviewImg').removeAttribute('src');
+      document.getElementById('notePhotoInfo').textContent = '';
+      document.getElementById('notePhotoStatus').textContent = 'わからない問題の写真を添付できます（自動で縮小して保存）';
+    }
+
+    function openPhotoViewer(id) {
+      const note = notesData.find(n => n.id === id);
+      if (!note || !isSafeImageDataUrl(note.photo)) return;
+      document.getElementById('photoViewerImg').src = note.photo;
+      document.getElementById('photoViewerCaption').textContent = `[${note.topic}] ${note.text}`;
+      document.getElementById('photoViewer').classList.remove('hidden');
+    }
+
+    function closePhotoViewer() {
+      document.getElementById('photoViewer').classList.add('hidden');
+      document.getElementById('photoViewerImg').removeAttribute('src');
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closePhotoViewer();
+    });
 
     function renderNotes() {
       const list = document.getElementById('notesList');
@@ -1850,25 +2121,39 @@
       badge.textContent = unresolvedCount;
       badge.classList.toggle('hidden', unresolvedCount === 0);
 
+      const usedKB = Math.round(JSON.stringify(notesData).length / 1024);
+      const info = document.getElementById('notesStorageInfo');
+      if (info) info.textContent = `この端末の保存量：約${usedKB}KB（目安の上限 約5MB）`;
+
       if (notesData.length === 0) {
         list.innerHTML = `<div class="bg-white p-8 rounded-xl border border-dashed border-slate-300 text-center text-sm text-slate-400">まだメモはありません。授業中の疑問や重要ポイントを上から追加してください。</div>`;
         return;
       }
 
+      const aiBtn = (id) => AI_TUTOR_ENABLED
+        ? `<button onclick="sendNoteToAi(${id})" class="px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded-lg text-xs transition">🤖 AI解説</button>`
+        : `<button onclick="sendNoteToAi(${id})" title="AI解説は準備中です" class="px-2.5 py-1.5 bg-slate-50 text-slate-400 border border-dashed border-slate-300 font-bold rounded-lg text-xs cursor-not-allowed">🤖 AI解説（準備中）</button>`;
+
       list.innerHTML = notesData.map(n => `
         <div class="bg-white p-4 rounded-xl shadow-sm border ${n.resolved ? 'border-slate-200 opacity-65' : 'border-indigo-200'} flex flex-col md:flex-row justify-between gap-3">
-          <div class="space-y-1.5 flex-1">
+          <div class="space-y-1.5 flex-1 min-w-0">
             <div class="flex flex-wrap items-center gap-2">
               <span class="text-xs font-bold px-2 py-0.5 rounded bg-indigo-50 text-indigo-700">${escapeHtml(n.topic)}</span>
               <span class="text-xs font-bold px-2 py-0.5 rounded ${n.type === 'question' ? 'bg-rose-50 text-rose-700' : 'bg-amber-50 text-amber-800'}">
                 ${n.type === 'question' ? '❓ 質問' : '💡 ポイント'}
               </span>
+              ${n.from ? `<span class="text-xs font-bold px-2 py-0.5 rounded bg-sky-50 text-sky-700">👤 ${escapeHtml(n.from)}</span>` : ''}
               <span class="text-xs text-slate-400">${escapeHtml(n.createdAt)}</span>
             </div>
-            <p class="text-sm font-medium ${n.resolved ? 'line-through text-slate-400' : 'text-slate-800'}">${escapeHtml(n.text)}</p>
+            <p class="text-sm font-medium break-words whitespace-pre-wrap ${n.resolved ? 'line-through text-slate-400' : 'text-slate-800'}">${escapeHtml(n.text)}</p>
+            ${isSafeImageDataUrl(n.photo) ? `
+              <button onclick="openPhotoViewer(${n.id})" class="inline-flex flex-col items-start gap-0.5" title="タップで拡大">
+                <img src="${escapeHtml(n.photo)}" alt="添付写真" class="h-24 max-w-[200px] object-cover rounded-lg border border-slate-300 hover:opacity-90">
+                <span class="text-[11px] text-slate-500">🔍 タップで拡大</span>
+              </button>` : ''}
           </div>
           <div class="flex flex-wrap items-center gap-1.5 shrink-0">
-            <button onclick="sendNoteToAi(${n.id})" class="px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded-lg text-xs transition">🤖 AI解説</button>
+            ${aiBtn(n.id)}
             <button onclick="editNoteText(${n.id})" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-xs transition">編集</button>
             <button onclick="toggleNoteResolved(${n.id})" class="px-2.5 py-1.5 ${n.resolved ? 'bg-slate-200 text-slate-700' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'} font-bold rounded-lg text-xs transition">
               ${n.resolved ? '未解決に戻す' : '✓ 解決済'}
@@ -1879,20 +2164,220 @@
       `).join('');
     }
 
+    function notesToPlainText() {
+      return notesData.map(n => `[${n.resolved ? '解決済' : '未解決'}][${n.topic}]${n.from ? `[${n.from}]` : ''}${n.createdAt ? `(${n.createdAt})` : ''} ${n.text}${n.photo ? ' [写真あり]' : ''}`).join('\n');
+    }
+
     function copyAllNotes() {
       if (notesData.length === 0) return alert('コピーするメモがありません。');
-      const txt = notesData.map(n => `[${n.resolved ? '解決済' : '未解決'}][${n.topic}] ${n.text}`).join('\n');
-      navigator.clipboard.writeText(txt).then(() => alert('すべてのメモをクリップボードにコピーしました！'));
+      copyText(notesToPlainText())
+        .then(() => alert('すべてのメモをクリップボードにコピーしました！'))
+        .catch(() => alert('コピーできませんでした。「.txt保存」をお使いください。'));
+    }
+
+    function downloadText(text, filename) {
+      const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
     }
 
     function exportNotesTxt() {
       if (notesData.length === 0) return alert('保存するメモがありません。');
-      const txt = notesData.map(n => `[${n.resolved ? '解決済' : '未解決'}][${n.topic}] ${n.text}`).join('\n');
-      const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = `math_notes_${new Date().toISOString().slice(0, 10)}.txt`;
-      a.click();
+      downloadText(notesToPlainText(), `math_notes_${new Date().toISOString().slice(0, 10)}.txt`);
+    }
+
+    /* ---------- 先生との共有（共有コードの出力・取り込み） ---------- */
+    function utf8ToBase64(str) {
+      const bytes = new TextEncoder().encode(str);
+      let binary = '';
+      for (let i = 0; i < bytes.length; i += 0x8000) {
+        binary += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+      }
+      return btoa(binary);
+    }
+
+    function base64ToUtf8(b64) {
+      const binary = atob(b64);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      return new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+    }
+
+    function copyText(text) {
+      if (navigator.clipboard && window.isSecureContext) {
+        // 権限確認などで応答がない場合も3秒で手動コピーの案内に切り替える
+        return Promise.race([
+          navigator.clipboard.writeText(text),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('clipboard timeout')), 3000))
+        ]);
+      }
+      return new Promise((resolve, reject) => {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        let ok = false;
+        try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+        document.body.removeChild(ta);
+        ok ? resolve() : reject(new Error('copy failed'));
+      });
+    }
+
+    function showStatus(elId, message, kind) {
+      const el = document.getElementById(elId);
+      const cls = { ok: 'bg-emerald-100 text-emerald-900', warn: 'bg-amber-100 text-amber-900', error: 'bg-rose-100 text-rose-800' }[kind] || 'bg-slate-100 text-slate-700';
+      el.className = `text-xs p-2 rounded-lg font-bold whitespace-pre-line ${cls}`;
+      el.textContent = message;
+    }
+
+    function saveStudentName() {
+      const name = document.getElementById('shareStudentName').value.trim().slice(0, 30);
+      try { localStorage.setItem(STUDENT_NAME_KEY, name); } catch (e) {}
+    }
+
+    function buildShareCode() {
+      const includePhotos = document.getElementById('shareIncludePhotos').checked;
+      const unresolvedOnly = document.getElementById('shareUnresolvedOnly').checked;
+      const name = document.getElementById('shareStudentName').value.trim().slice(0, 30);
+      const list = notesData.filter(n => !unresolvedOnly || !n.resolved);
+      if (list.length === 0) return null;
+      const payload = {
+        app: 'math-lab-notes',
+        v: 1,
+        exportedAt: new Date().toISOString(),
+        from: name,
+        notes: list.map(n => ({
+          uid: n.uid,
+          topic: n.topic,
+          type: n.type,
+          text: n.text,
+          resolved: n.resolved,
+          createdAt: n.createdAt,
+          from: n.from || name,
+          photo: includePhotos && isSafeImageDataUrl(n.photo) ? n.photo : null
+        }))
+      };
+      return { code: SHARE_PREFIX + utf8ToBase64(JSON.stringify(payload)), count: list.length, name };
+    }
+
+    async function copyShareCode() {
+      saveStudentName();
+      const built = buildShareCode();
+      if (!built) return showStatus('shareCodeStatus', '共有するメモがありません。', 'warn');
+      const out = document.getElementById('shareCodeOutput');
+      out.value = built.code;
+      out.classList.remove('hidden');
+      const sizeKB = Math.round(built.code.length / 1024);
+      const big = built.code.length > 1500000;
+      try {
+        await copyText(built.code);
+        showStatus('shareCodeStatus',
+          `✅ 共有コード（${built.count}件・約${sizeKB}KB）をコピーしました。チャットやメールに貼り付けて先生に送ってください。` +
+          (big ? '\nサイズが大きいため送れない場合は、「写真も含める」を外すか「ファイルで保存」を使ってください。' : ''),
+          big ? 'warn' : 'ok');
+      } catch (e) {
+        out.focus();
+        out.select();
+        showStatus('shareCodeStatus', '自動でコピーできませんでした。上の欄を長押し（PCは Ctrl+C）してコピーしてください。', 'warn');
+      }
+    }
+
+    function downloadShareCode() {
+      saveStudentName();
+      const built = buildShareCode();
+      if (!built) return showStatus('shareCodeStatus', '共有するメモがありません。', 'warn');
+      const safeName = built.name.replace(/[\\/:*?"<>|\s]/g, '_');
+      downloadText(built.code, `math_notes_share_${safeName ? safeName + '_' : ''}${new Date().toISOString().slice(0, 10)}.txt`);
+      showStatus('shareCodeStatus', `💾 共有ファイル（${built.count}件）を保存しました。このファイルを先生に送ってください。`, 'ok');
+    }
+
+    function decodeSharePayload(b64) {
+      if (!/^[A-Za-z0-9+/]+={0,2}$/.test(b64)) throw new Error('broken');
+      const payload = JSON.parse(base64ToUtf8(b64));
+      if (!payload || payload.app !== 'math-lab-notes' || !Array.isArray(payload.notes)) throw new Error('not notes');
+      return payload;
+    }
+
+    function importNotes(text) {
+      const raw = String(text || '').replace(/\s+/g, '');
+      const segments = raw.split(SHARE_PREFIX).slice(1).filter(Boolean);
+      if (segments.length === 0) {
+        return showStatus('importStatus', '共有コードが見つかりません。「MATHLAB1:」で始まるコードを貼り付けてください。', 'error');
+      }
+
+      const existing = new Set(notesData.map(n => n.uid));
+      const incoming = [];
+      let dup = 0, invalid = 0, photoDropped = 0, brokenCodes = 0;
+
+      segments.forEach(seg => {
+        let payload;
+        try {
+          payload = decodeSharePayload(seg);
+        } catch (e) {
+          brokenCodes++;
+          return;
+        }
+        const sender = String(payload.from ?? '').slice(0, 30);
+        payload.notes.slice(0, 500).forEach(item => {
+          if (!item || typeof item !== 'object') { invalid++; return; }
+          const note = sanitizeNote({ ...item, from: item.from || sender }, false);
+          if (!note) { invalid++; return; }
+          if (item.photo && !note.photo) photoDropped++;
+          if (existing.has(note.uid)) { dup++; return; }
+          existing.add(note.uid);
+          incoming.push(note);
+        });
+      });
+
+      if (incoming.length === 0) {
+        if (brokenCodes === segments.length) {
+          return showStatus('importStatus', '共有コードを読み取れませんでした。コードが途中で切れていないか確認し、もう一度コピーしてください。', 'error');
+        }
+        return showStatus('importStatus', `新しいメモはありませんでした（重複 ${dup}件はスキップ）。`, 'warn');
+      }
+
+      const prev = notesData.slice();
+      let photosStripped = false;
+      notesData = [...incoming, ...prev];
+      if (!saveNotesStorage()) {
+        // 容量オーバー時は写真を除いて再挑戦
+        notesData = [...incoming.map(n => ({ ...n, photo: null })), ...prev];
+        photosStripped = incoming.some(n => n.photo);
+        if (!saveNotesStorage()) {
+          notesData = prev;
+          saveNotesStorage();
+          return showStatus('importStatus', '端末の保存容量が足りないため取り込めませんでした。不要なメモ（特に写真つき）を削除してから再度お試しください。', 'error');
+        }
+      }
+
+      const notes = [];
+      if (dup) notes.push(`重複 ${dup}件はスキップ`);
+      if (invalid) notes.push(`読み取れない ${invalid}件を除外`);
+      if (photoDropped) notes.push(`安全でない・大きすぎる写真 ${photoDropped}枚を除外`);
+      if (photosStripped) notes.push('保存容量不足のため写真を除いて取り込み');
+      if (brokenCodes) notes.push(`壊れたコード ${brokenCodes}件を無視`);
+      showStatus('importStatus', `✅ ${incoming.length}件のメモを取り込みました。${notes.length ? '（' + notes.join('、') + '）' : ''}`, notes.length ? 'warn' : 'ok');
+      document.getElementById('importCodeInput').value = '';
+    }
+
+    function importNotesFromInput() {
+      importNotes(document.getElementById('importCodeInput').value);
+    }
+
+    function importNotesFromFile(inputEl) {
+      const file = inputEl.files && inputEl.files[0];
+      inputEl.value = '';
+      if (!file) return;
+      if (file.size > 20 * 1024 * 1024) return showStatus('importStatus', 'ファイルが大きすぎます（20MBまで）。', 'error');
+      file.text()
+        .then(importNotes)
+        .catch(() => showStatus('importStatus', 'ファイルを読み込めませんでした。', 'error'));
     }
 
     function escapeHtml(str) {
@@ -1900,6 +2385,22 @@
     }
 
     /* ==================== 5. Gemini API 連携（現行モデル自動リトライ＆フォールバック） ==================== */
+    // AIチューター・類題作成は一時保留中（Coming Soon）。再開するときは true にする。
+    // Gemini 呼び出しとモデルフォールバック処理（callGemini）はそのまま残している。
+    const AI_TUTOR_ENABLED = false;
+
+    function applyAiAvailability() {
+      document.getElementById('aiComingSoon').classList.toggle('hidden', AI_TUTOR_ENABLED);
+      document.getElementById('aiFeatureArea').classList.toggle('hidden', !AI_TUTOR_ENABLED);
+      document.getElementById('aiSoonBadge').classList.toggle('hidden', AI_TUTOR_ENABLED);
+    }
+
+    function goToTab(tabId) {
+      const btn = document.querySelector(`.tab-btn[onclick^="switchTab('${tabId}'"]`);
+      switchTab(tabId, btn);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
     function updateApiUi() {
       const key = localStorage.getItem('gemini_api_key');
       const dot = document.getElementById('apiStatusDot');
@@ -1987,6 +2488,7 @@
     }
 
     async function askGeminiTutor() {
+      if (!AI_TUTOR_ENABLED) return alert('AIチューターは現在準備中（Coming Soon）です。');
       const q = document.getElementById('aiQuestionInput').value.trim();
       if (!q) return alert('質問内容を入力してください。');
 
@@ -2010,6 +2512,7 @@
     }
 
     async function generatePracticeProblem(count = 1) {
+      if (!AI_TUTOR_ENABLED) return alert('AI予想問題メーカーは現在準備中（Coming Soon）です。');
       const topic = document.getElementById('genTopic').value;
       const level = document.getElementById('genLevel').value;
       const btn1 = document.getElementById('btnGenProblem');
@@ -2102,6 +2605,8 @@
       // 旧バージョンでブラウザに保存されたGitHub PAT等を消去
       try { localStorage.removeItem('github_pat'); localStorage.removeItem('github_repo'); } catch (e) {}
       updateApiUi();
+      applyAiAvailability();
+      try { document.getElementById('shareStudentName').value = localStorage.getItem(STUDENT_NAME_KEY) || ''; } catch (e) {}
       updateParabola();
       drawMovingScene();
       updateParaSim();
