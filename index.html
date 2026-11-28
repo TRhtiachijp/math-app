@@ -58,8 +58,8 @@
     <button onclick="switchTab('parabolaArea', this)" class="tab-btn px-3.5 py-2 rounded-lg font-bold text-sm whitespace-nowrap text-slate-600 hover:bg-slate-100 transition">
       📐 放物線と面積（苦手克服）
     </button>
-    <button onclick="switchTab('geome', this)" class="tab-btn px-3.5 py-2 rounded-lg font-bold text-sm whitespace-nowrap text-slate-600 hover:bg-slate-100 transition">
-      ⭕ 円周角の定理
+    <button onclick="switchTab('proof', this)" class="tab-btn px-3.5 py-2 rounded-lg font-bold text-sm whitespace-nowrap text-slate-600 hover:bg-slate-100 transition">
+      🔷 平行四辺形・ひし形 証明
     </button>
     <button onclick="switchTab('notes', this)" class="tab-btn px-3.5 py-2 rounded-lg font-bold text-sm whitespace-nowrap text-slate-600 hover:bg-slate-100 transition flex items-center gap-1.5">
       <span>📝 学習メモ</span>
@@ -282,52 +282,114 @@
       </div>
     </section>
 
-    <!-- ==================== 3. 円周角の定理モジュール ==================== -->
-    <section id="geomeModule" class="module-view hidden bg-white p-4 md:p-6 rounded-xl shadow-sm border border-slate-200">
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <div class="lg:col-span-7 flex flex-col items-center">
-          <p class="text-xs text-slate-500 mb-2">💡 円周上の <strong class="text-rose-600">点P</strong>（や点A・B）を指やマウスでドラッグして動かしてみよう！</p>
-          <canvas id="circleCanvas" width="440" height="440" class="w-full max-w-[440px] border border-slate-200 rounded-xl bg-slate-50 cursor-grab"></canvas>
+    <!-- ==================== 3. 平行四辺形・ひし形 合同の証明モジュール ==================== -->
+    <section id="proofModule" class="module-view hidden space-y-4">
+      <div class="bg-white p-2 rounded-xl shadow-sm border border-slate-200 flex gap-2">
+        <button onclick="switchProofMode('sim')" id="btnProofSim" class="flex-1 py-2 px-3 rounded-lg font-bold text-sm bg-indigo-50 text-indigo-700 border border-indigo-200 transition">
+          ① 図形＆性質シミュレーター
+        </button>
+        <button onclick="switchProofMode('drill')" id="btnProofDrill" class="flex-1 py-2 px-3 rounded-lg font-bold text-sm text-slate-600 hover:bg-slate-50 transition">
+          ② 間違えやすい証明演習ドリル
+        </button>
+      </div>
+
+      <!-- ① 図形＆性質シミュレーター -->
+      <div id="proofSimArea" class="bg-white p-4 md:p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
+        <div class="flex flex-wrap gap-2">
+          <button onclick="setProofShape('para')" id="btnShapePara" class="px-4 py-2 rounded-lg font-bold text-xs bg-indigo-600 text-white shadow-sm transition">
+            ▱ 平行四辺形
+          </button>
+          <button onclick="setProofShape('rhombus')" id="btnShapeRhombus" class="px-4 py-2 rounded-lg font-bold text-xs bg-slate-100 text-slate-700 hover:bg-slate-200 transition">
+            ◇ ひし形
+          </button>
         </div>
 
-        <div class="lg:col-span-5 flex flex-col justify-between space-y-4">
-          <div class="space-y-3">
-            <h2 class="text-lg font-bold text-slate-800">円周角と中心角の関係</h2>
-            <div class="grid grid-cols-2 gap-3">
-              <div class="bg-amber-50 border border-amber-200 p-3.5 rounded-xl text-center">
-                <div class="text-xs font-bold text-amber-800">中心角 ∠AOB</div>
-                <div id="centralAngleVal" class="text-2xl font-extrabold text-amber-600 mt-1">100°</div>
-              </div>
-              <div class="bg-rose-50 border border-rose-200 p-3.5 rounded-xl text-center">
-                <div class="text-xs font-bold text-rose-800">円周角 ∠APB</div>
-                <div id="inscribedAngleVal" class="text-2xl font-extrabold text-rose-600 mt-1">50°</div>
-              </div>
-            </div>
-
-            <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 text-sm space-y-1.5">
-              <p class="font-bold text-slate-700">📌 確認できる定理</p>
-              <ul class="list-disc list-inside text-slate-600 space-y-1 text-xs leading-relaxed">
-                <li>1つの弧に対する円周角の大きさは一定（Pを動かしても変わらない）。</li>
-                <li>円周角の大きさは、その弧に対する中心角の <strong>半分（1/2）</strong>。</li>
-                <li>半円の弧に対する円周角は <strong>90°（直角）</strong>。</li>
-              </ul>
-            </div>
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div class="lg:col-span-7 flex flex-col items-center">
+            <canvas id="proofCanvas" width="460" height="400" class="w-full max-w-[460px] border border-slate-200 rounded-xl bg-slate-50"></canvas>
           </div>
 
-          <div class="space-y-2.5 bg-slate-50 p-4 rounded-xl border border-slate-200">
-            <div class="text-xs font-bold text-slate-600 mb-1">プリセット＆表示設定</div>
-            <div class="grid grid-cols-2 gap-2">
-              <button onclick="setCirclePreset(180)" class="py-2 px-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-xs transition">
-                半円の弧（180° → 90°）
+          <div class="lg:col-span-5 space-y-4">
+            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+              <div class="text-xs font-bold text-slate-500">スライダーで形を変えても「いつも成り立つ性質」を確かめよう</div>
+              <div>
+                <div class="flex justify-between text-sm font-bold mb-1">
+                  <span>∠ABC の大きさ</span>
+                  <span id="proofAngleVal" class="text-indigo-600">65°</span>
+                </div>
+                <input type="range" id="proofAngle" min="40" max="140" step="5" value="65" oninput="drawProofSim()" class="w-full accent-indigo-600">
+              </div>
+              <div id="proofRatioWrap">
+                <div class="flex justify-between text-sm font-bold mb-1">
+                  <span>辺の比 AB : BC</span>
+                  <span id="proofRatioVal" class="text-emerald-600">0.75 : 1</span>
+                </div>
+                <input type="range" id="proofRatio" min="0.5" max="1.3" step="0.05" value="0.75" oninput="drawProofSim()" class="w-full accent-emerald-600">
+              </div>
+              <div class="grid grid-cols-2 gap-x-3 gap-y-2 pt-1 text-xs font-bold text-slate-700">
+                <label class="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" id="chkProofParallel" onchange="drawProofSim()" checked class="w-4 h-4 accent-indigo-600">平行の印（＞）</label>
+                <label class="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" id="chkProofSides" onchange="drawProofSim()" checked class="w-4 h-4 accent-indigo-600">等しい辺の印</label>
+                <label class="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" id="chkProofDiag" onchange="drawProofSim()" checked class="w-4 h-4 accent-indigo-600">対角線と交点O</label>
+                <label class="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" id="chkProofAlt" onchange="drawProofSim()" class="w-4 h-4 accent-amber-500">錯角（対角線AC）</label>
+                <label class="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" id="chkProofCorr" onchange="drawProofSim()" class="w-4 h-4 accent-rose-500">同位角（BCの延長）</label>
+                <label class="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" id="chkProofVert" onchange="drawProofSim()" class="w-4 h-4 accent-violet-500">対頂角（点O）</label>
+              </div>
+            </div>
+
+            <div id="proofInfoBox" class="bg-indigo-50 border border-indigo-200 p-4 rounded-xl space-y-2 text-sm"></div>
+          </div>
+        </div>
+
+        <!-- 注意点カード -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div class="bg-rose-50 border border-rose-200 p-3.5 rounded-xl text-xs leading-relaxed space-y-1">
+            <div class="font-bold text-rose-800 text-sm">⚠️ 対角線の長さは等しい？</div>
+            <p class="text-rose-900">平行四辺形・ひし形の対角線は <strong>長さが等しいとは限らない</strong>。等しくなるのは長方形・正方形のとき。「AC＝BD」を根拠に使うのは減点。</p>
+          </div>
+          <div class="bg-rose-50 border border-rose-200 p-3.5 rounded-xl text-xs leading-relaxed space-y-1">
+            <div class="font-bold text-rose-800 text-sm">⚠️ 対角線は垂直？</div>
+            <p class="text-rose-900">対角線が <strong>垂直に交わるのはひし形（と正方形）だけ</strong>。一般の平行四辺形で「AC⊥BD」と書いてはいけない。</p>
+          </div>
+          <div class="bg-amber-50 border border-amber-200 p-3.5 rounded-xl text-xs leading-relaxed space-y-1">
+            <div class="font-bold text-amber-800 text-sm">⚠️ 錯角は「どの平行線か」を書く</div>
+            <p class="text-amber-900">「錯角は等しい」だけでは不十分。<strong>「AD∥BCより、錯角は等しいから」</strong>のように平行線を明記する。AB∥DC と AD∥BC の取り違えにも注意。</p>
+          </div>
+          <div class="bg-amber-50 border border-amber-200 p-3.5 rounded-xl text-xs leading-relaxed space-y-1">
+            <div class="font-bold text-amber-800 text-sm">⚠️ 対角線が角を2等分？</div>
+            <p class="text-amber-900">対角線が頂点の角を2等分するのは <strong>ひし形</strong>の性質。一般の平行四辺形では ∠BAC＝∠DAC とは言えない。図で等しく見えても根拠にしない。</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ② 間違えやすい証明演習ドリル -->
+      <div id="proofDrillArea" class="hidden bg-white p-4 md:p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
+        <div class="flex flex-wrap justify-between items-center gap-3 bg-sky-50 border border-sky-200 p-4 rounded-xl">
+          <div>
+            <h3 class="font-bold text-sky-900 text-base">🧩 間違えやすい！合同の証明演習ドリル</h3>
+            <p class="text-xs text-sky-800 mt-0.5">まず自分で証明を書いてから、ヒント→証明の流れ→減点注意ポイントの順に確認しよう（通信不要）。</p>
+          </div>
+          <div class="flex flex-wrap gap-2 items-center">
+            <select id="proofDrillSelect" onchange="selectProofDrill(this.value)" class="p-2 border border-sky-300 rounded-lg text-xs font-bold bg-white max-w-[260px]"></select>
+            <button onclick="nextProofDrill(-1)" class="px-3 py-2 bg-white hover:bg-sky-100 text-sky-800 border border-sky-300 font-bold rounded-lg text-xs transition">← 前</button>
+            <button onclick="nextProofDrill(1)" class="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-lg text-xs shadow-sm transition">次の問題 →</button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div class="lg:col-span-5 flex flex-col items-center gap-2">
+            <canvas id="proofDrillCanvas" width="420" height="340" class="w-full max-w-[420px] border border-slate-200 rounded-xl bg-slate-50"></canvas>
+            <p class="text-[11px] text-slate-500">色のついた2つの三角形の合同を証明します。</p>
+          </div>
+          <div class="lg:col-span-7 space-y-3">
+            <div id="proofDrillCard" class="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-3 text-sm leading-relaxed"></div>
+            <div class="flex gap-2">
+              <button onclick="sendProofToNotes()" class="flex-1 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded-lg text-xs transition">
+                📝 この問題を学習メモに保存
               </button>
-              <button onclick="setCirclePreset(100)" class="py-2 px-3 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 font-bold rounded-lg text-xs transition">
-                標準（100° → 50°）
+              <button onclick="nextProofDrill(1)" class="flex-1 py-2 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-lg text-xs transition">
+                次の問題へ進む →
               </button>
             </div>
-            <label class="flex items-center gap-2 pt-2 text-sm font-bold text-slate-700 cursor-pointer">
-              <input type="checkbox" id="chkAuxLine" onchange="drawCircle()" class="w-4 h-4 accent-indigo-600">
-              <span>証明用の補助線（直線POの延長）を表示</span>
-            </label>
           </div>
         </div>
       </div>
@@ -353,7 +415,7 @@
             <option value="放物線と面積">単元：放物線と面積</option>
             <option value="2次関数・変域">単元：2次関数・変域</option>
             <option value="動点と面積">単元：動点と面積</option>
-            <option value="円周角の定理">単元：円周角の定理</option>
+            <option value="平行四辺形・ひし形の証明">単元：平行四辺形・ひし形の証明</option>
             <option value="相似・三平方">単元：相似・三平方</option>
             <option value="その他">単元：その他</option>
           </select>
@@ -402,14 +464,18 @@
           <p class="text-xs text-slate-500">単元とレベルを選んで、その場で練習問題（ヒント・解説付き）を自動生成できます。</p>
           <div class="grid grid-cols-2 gap-2">
             <select id="genTopic" class="p-2.5 border border-slate-300 rounded-lg text-sm font-bold bg-slate-50">
-              <option value="2つの放物線と軸に平行な線分・三角形の面積">2つの放物線と三角形の面積</option>
-              <option value="2次関数の変化の割合と変域">2次関数の変化の割合と変域</option>
-              <option value="2次関数と動点・面積の文章題">動点と面積の文章題</option>
-              <option value="放物線と直線の交点・面積・等積変形">放物線と直線の融合問題</option>
-              <option value="円周角の定理と円に内接する四角形・角度">円周角の定理（角度・証明）</option>
-              <option value="相似な図形と平行線と線分の比">相似と平行線・線分の比</option>
-              <option value="三平方の定理の平面・空間図形への応用">三平方の定理（応用）</option>
-              <option value="中3数学 定期テスト総合ミックス演習">テスト総合ミックス演習</option>
+              <optgroup label="📌 来週のテスト範囲">
+                <option value="2つの放物線と軸に平行な線分・三角形の面積">2つの放物線と三角形の面積</option>
+                <option value="2次関数の変化の割合と変域">2次関数の変化の割合と変域</option>
+                <option value="2次関数と動点・面積の文章題">動点と面積の文章題</option>
+                <option value="放物線と直線の交点・面積・等積変形">放物線と直線の融合問題</option>
+                <option value="平行四辺形・ひし形の性質を使った三角形の合同の証明">平行四辺形・ひし形の合同の証明</option>
+                <option value="テスト範囲ミックス（2次関数、平行四辺形・ひし形の合同の証明）">テスト範囲ミックス演習</option>
+              </optgroup>
+              <optgroup label="その他の単元">
+                <option value="相似な図形と平行線と線分の比">相似と平行線・線分の比</option>
+                <option value="三平方の定理の平面・空間図形への応用">三平方の定理（応用）</option>
+              </optgroup>
             </select>
             <select id="genLevel" class="p-2.5 border border-slate-300 rounded-lg text-sm font-bold bg-slate-50">
               <option value="基本〜標準（定期テスト頻出）">レベル：基本〜標準</option>
@@ -481,8 +547,9 @@
       } else if (tabId === 'parabolaArea') {
         updateParaSim();
         if (!currentDrillData) generateAutoDrill();
-      } else if (tabId === 'geome') {
-        drawCircle();
+      } else if (tabId === 'proof') {
+        drawProofSim();
+        renderProofDrill();
       }
       checkRemoteUpdate(false);
     }
@@ -1164,186 +1231,561 @@
       alert('学習メモボードにこの問題を追加しました！');
     }
 
-    /* ==================== 3. 円周角の定理シミュレーター ==================== */
-    let angA = Math.PI * 0.78;
-    let angB = Math.PI * 0.22;
-    let angP = -Math.PI * 0.55;
-    let draggingPoint = null;
+    /* ==================== 3. 平行四辺形・ひし形 合同の証明 ==================== */
+    let proofShape = 'para';
+    let proofDrillIndex = 0;
 
-    function normAngle(a) {
-      while (a < 0) a += Math.PI * 2;
-      while (a >= Math.PI * 2) a -= Math.PI * 2;
-      return a;
+    // B を左下、C を右下、A を左上、D を右上に置いた平行四辺形（ひし形）の頂点座標
+    function getQuadPoints(shape, angleDeg, ratio, w, h, L) {
+      const t = angleDeg * Math.PI / 180;
+      const side = shape === 'rhombus' ? L : L * ratio;
+      const dx = side * Math.cos(t), dy = side * Math.sin(t);
+      const minX = Math.min(0, dx), maxX = Math.max(L, L + dx);
+      const ox = (w - (maxX - minX)) / 2 - minX;
+      const oy = (h + dy) / 2;
+      return {
+        A: { x: ox + dx, y: oy - dy },
+        B: { x: ox, y: oy },
+        C: { x: ox + L, y: oy },
+        D: { x: ox + L + dx, y: oy - dy }
+      };
     }
 
-    function isAngleBetweenCCW(target, start, end) {
-      const t = normAngle(target - start);
-      const e = normAngle(end - start);
-      return t > 0 && t < e;
+    const lerpPt = (p, q, t) => ({ x: p.x + (q.x - p.x) * t, y: p.y + (q.y - p.y) * t });
+    const midPt = (p, q) => lerpPt(p, q, 0.5);
+    const distPt = (p, q) => Math.hypot(q.x - p.x, q.y - p.y);
+
+    function unitVec(p, q) {
+      const len = distPt(p, q) || 1;
+      return { x: (q.x - p.x) / len, y: (q.y - p.y) / len };
     }
 
-    function setCirclePreset(deg) {
-      if (deg === 180) {
-        angA = Math.PI;
-        angB = 0;
-        angP = -Math.PI * 0.42;
-      } else {
-        const half = (deg * Math.PI / 180) / 2;
-        angA = Math.PI / 2 + half;
-        angB = Math.PI / 2 - half;
-        angP = -Math.PI * 0.55;
-      }
-      drawCircle();
+    function footPt(p, a, b) {
+      const vx = b.x - a.x, vy = b.y - a.y;
+      const t = ((p.x - a.x) * vx + (p.y - a.y) * vy) / (vx * vx + vy * vy);
+      return lerpPt(a, b, t);
     }
 
-    function drawCircle() {
-      const canvas = document.getElementById('circleCanvas');
-      const ctx = canvas.getContext('2d');
-      const w = canvas.width, h = canvas.height;
-      const cx = w / 2, cy = h / 2, r = 165;
-
-      ctx.clearRect(0, 0, w, h);
-
-      const A = { x: cx + r * Math.cos(angA), y: cy + r * Math.sin(angA) };
-      const B = { x: cx + r * Math.cos(angB), y: cy + r * Math.sin(angB) };
-      const P = { x: cx + r * Math.cos(angP), y: cy + r * Math.sin(angP) };
-
-      const ccwAtoB = normAngle(angB - angA);
-      const pInCCW = isAngleBetweenCCW(angP, angA, angB);
-      let centralRad, arcStart, arcEnd;
-      if (pInCCW) {
-        centralRad = Math.PI * 2 - ccwAtoB;
-        arcStart = angB;
-        arcEnd = angA;
-      } else {
-        centralRad = ccwAtoB;
-        arcStart = angA;
-        arcEnd = angB;
-      }
-
-      const centralDeg = Math.round((centralRad * 180) / Math.PI);
-      const inscribedDeg = Number(((centralDeg) / 2).toFixed(1));
-
-      document.getElementById('centralAngleVal').textContent = `${centralDeg}°`;
-      document.getElementById('inscribedAngleVal').textContent = `${inscribedDeg}°`;
-
-      ctx.strokeStyle = '#94a3b8';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(cx, cy, r, 0, Math.PI * 2);
-      ctx.stroke();
-
-      ctx.strokeStyle = '#f59e0b';
-      ctx.lineWidth = 5;
-      ctx.beginPath();
-      ctx.arc(cx, cy, r, arcStart, arcEnd);
-      ctx.stroke();
-
-      ctx.fillStyle = 'rgba(245, 158, 11, 0.2)';
-      ctx.beginPath();
-      ctx.moveTo(cx, cy);
-      ctx.arc(cx, cy, 36, arcStart, arcEnd);
-      ctx.closePath();
-      ctx.fill();
-
-      ctx.strokeStyle = '#d97706';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(A.x, A.y); ctx.lineTo(cx, cy); ctx.lineTo(B.x, B.y);
-      ctx.stroke();
-
-      ctx.strokeStyle = '#e11d48';
-      ctx.lineWidth = 2.5;
-      ctx.beginPath();
-      ctx.moveTo(A.x, A.y); ctx.lineTo(P.x, P.y); ctx.lineTo(B.x, B.y);
-      ctx.stroke();
-
-      if (document.getElementById('chkAuxLine').checked) {
-        const oppX = cx - r * Math.cos(angP);
-        const oppY = cy - r * Math.sin(angP);
-        ctx.strokeStyle = '#6366f1';
-        ctx.lineWidth = 1.5;
-        ctx.setLineDash([5, 5]);
-        ctx.beginPath();
-        ctx.moveTo(P.x, P.y);
-        ctx.lineTo(oppX, oppY);
-        ctx.stroke();
-        ctx.setLineDash([]);
-      }
-
-      ctx.fillStyle = '#334155';
-      ctx.beginPath(); ctx.arc(cx, cy, 4, 0, Math.PI * 2); ctx.fill();
-      ctx.font = 'bold 13px sans-serif';
-      ctx.fillText('O', cx - 16, cy - 8);
-
-      drawControlPoint(ctx, A, 'A', '#4f46e5');
-      drawControlPoint(ctx, B, 'B', '#4f46e5');
-      drawControlPoint(ctx, P, 'P', '#e11d48');
+    function angleDegAt(v, p1, p2) {
+      const u1 = unitVec(v, p1), u2 = unitVec(v, p2);
+      const c = Math.max(-1, Math.min(1, u1.x * u2.x + u1.y * u2.y));
+      return Math.acos(c) * 180 / Math.PI;
     }
 
-    function drawControlPoint(ctx, pt, label, color) {
+    function gLine(ctx, p, q, color, width = 2, dash = null) {
+      ctx.save();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = width;
+      if (dash) ctx.setLineDash(dash);
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y);
+      ctx.lineTo(q.x, q.y);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function gFillPoly(ctx, pts, color) {
+      ctx.save();
       ctx.fillStyle = color;
       ctx.beginPath();
-      ctx.arc(pt.x, pt.y, 9, 0, Math.PI * 2);
+      pts.forEach((p, i) => (i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y)));
+      ctx.closePath();
       ctx.fill();
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-
-      ctx.fillStyle = '#0f172a';
-      ctx.font = 'bold 14px sans-serif';
-      ctx.fillText(label, pt.x + 12, pt.y + 5);
+      ctx.restore();
     }
 
-    function setupCircleEvents() {
-      const canvas = document.getElementById('circleCanvas');
-      const getPos = (e) => {
-        const rect = canvas.getBoundingClientRect();
-        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-        return {
-          x: (clientX - rect.left) * (canvas.width / rect.width),
-          y: (clientY - rect.top) * (canvas.height / rect.height)
-        };
-      };
+    // 点を打ち、center から遠ざかる向き（または offset 指定）にラベルを書く
+    function gLabel(ctx, p, label, center, offset = null) {
+      let ox, oy;
+      if (offset) {
+        ox = offset[0]; oy = offset[1];
+      } else {
+        const u = unitVec(center, p);
+        ox = u.x * 16; oy = u.y * 16;
+      }
+      ctx.save();
+      ctx.fillStyle = '#0f172a';
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.font = 'bold 15px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(label, p.x + ox, p.y + oy);
+      ctx.restore();
+    }
 
-      const startDrag = (e) => {
-        const pos = getPos(e);
-        const cx = canvas.width / 2, cy = canvas.height / 2, r = 165;
-        const pts = [
-          { name: 'P', x: cx + r * Math.cos(angP), y: cy + r * Math.sin(angP) },
-          { name: 'A', x: cx + r * Math.cos(angA), y: cy + r * Math.sin(angA) },
-          { name: 'B', x: cx + r * Math.cos(angB), y: cy + r * Math.sin(angB) }
-        ];
-        for (const p of pts) {
-          if (Math.hypot(pos.x - p.x, pos.y - p.y) < 28) {
-            draggingPoint = p.name;
-            e.preventDefault();
-            break;
-          }
+    // 等しい辺の印（線分の中点に n 本の短い線）
+    function gTicks(ctx, p, q, n, color = '#334155') {
+      const m = midPt(p, q);
+      const u = unitVec(p, q);
+      const nx = -u.y, ny = u.x;
+      ctx.save();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      for (let i = 0; i < n; i++) {
+        const off = (i - (n - 1) / 2) * 5;
+        const cx = m.x + u.x * off, cy = m.y + u.y * off;
+        ctx.beginPath();
+        ctx.moveTo(cx - nx * 6, cy - ny * 6);
+        ctx.lineTo(cx + nx * 6, cy + ny * 6);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    // 平行の印（p→q 向きの「＞」を n 個）
+    function gParallelMark(ctx, p, q, n, color = '#4f46e5') {
+      const base = lerpPt(p, q, 0.3);
+      const u = unitVec(p, q);
+      const nx = -u.y, ny = u.x;
+      ctx.save();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      for (let i = 0; i < n; i++) {
+        const off = (i - (n - 1) / 2) * 7;
+        const tx = base.x + u.x * (off + 4), ty = base.y + u.y * (off + 4);
+        ctx.beginPath();
+        ctx.moveTo(tx - u.x * 7 + nx * 5, ty - u.y * 7 + ny * 5);
+        ctx.lineTo(tx, ty);
+        ctx.lineTo(tx - u.x * 7 - nx * 5, ty - u.y * 7 - ny * 5);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    // 頂点 v で、v→p1 から v→p2 への小さい側の角を塗る
+    function gAngle(ctx, v, p1, p2, r, color, label = '') {
+      const a1 = Math.atan2(p1.y - v.y, p1.x - v.x);
+      const a2 = Math.atan2(p2.y - v.y, p2.x - v.x);
+      let d = a2 - a1;
+      while (d <= -Math.PI) d += Math.PI * 2;
+      while (d > Math.PI) d -= Math.PI * 2;
+      ctx.save();
+      ctx.fillStyle = color;
+      ctx.globalAlpha = 0.3;
+      ctx.beginPath();
+      ctx.moveTo(v.x, v.y);
+      ctx.arc(v.x, v.y, r, a1, a1 + d, d < 0);
+      ctx.closePath();
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(v.x, v.y, r, a1, a1 + d, d < 0);
+      ctx.stroke();
+      if (label) {
+        const mid = a1 + d / 2;
+        ctx.fillStyle = color;
+        ctx.font = 'bold 11px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(label, v.x + Math.cos(mid) * (r + 9), v.y + Math.sin(mid) * (r + 9));
+      }
+      ctx.restore();
+    }
+
+    function gRightAngle(ctx, v, p1, p2, s = 11, color = '#0f172a') {
+      const u1 = unitVec(v, p1), u2 = unitVec(v, p2);
+      ctx.save();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.moveTo(v.x + u1.x * s, v.y + u1.y * s);
+      ctx.lineTo(v.x + (u1.x + u2.x) * s, v.y + (u1.y + u2.y) * s);
+      ctx.lineTo(v.x + u2.x * s, v.y + u2.y * s);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function switchProofMode(mode) {
+      const simEl = document.getElementById('proofSimArea');
+      const drillEl = document.getElementById('proofDrillArea');
+      const btnSim = document.getElementById('btnProofSim');
+      const btnDrill = document.getElementById('btnProofDrill');
+      const activeCls = 'flex-1 py-2 px-3 rounded-lg font-bold text-sm bg-indigo-50 text-indigo-700 border border-indigo-200 transition';
+      const idleCls = 'flex-1 py-2 px-3 rounded-lg font-bold text-sm text-slate-600 hover:bg-slate-50 transition';
+
+      if (mode === 'sim') {
+        simEl.classList.remove('hidden');
+        drillEl.classList.add('hidden');
+        btnSim.className = activeCls;
+        btnDrill.className = idleCls;
+        drawProofSim();
+      } else {
+        simEl.classList.add('hidden');
+        drillEl.classList.remove('hidden');
+        btnDrill.className = activeCls;
+        btnSim.className = idleCls;
+        renderProofDrill();
+      }
+    }
+
+    function setProofShape(shape) {
+      proofShape = shape;
+      const activeCls = 'px-4 py-2 rounded-lg font-bold text-xs bg-indigo-600 text-white shadow-sm transition';
+      const idleCls = 'px-4 py-2 rounded-lg font-bold text-xs bg-slate-100 text-slate-700 hover:bg-slate-200 transition';
+      document.getElementById('btnShapePara').className = shape === 'para' ? activeCls : idleCls;
+      document.getElementById('btnShapeRhombus').className = shape === 'rhombus' ? activeCls : idleCls;
+      document.getElementById('proofRatioWrap').classList.toggle('hidden', shape === 'rhombus');
+      drawProofSim();
+    }
+
+    function drawProofSim() {
+      const canvas = document.getElementById('proofCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const w = canvas.width, h = canvas.height;
+      const isRh = proofShape === 'rhombus';
+      const angleDeg = Number(document.getElementById('proofAngle').value);
+      const ratio = Number(document.getElementById('proofRatio').value);
+      document.getElementById('proofAngleVal').textContent = `${angleDeg}°`;
+      document.getElementById('proofRatioVal').textContent = `${ratio.toFixed(2)} : 1`;
+
+      const isChecked = (id) => document.getElementById(id).checked;
+      const showPar = isChecked('chkProofParallel');
+      const showSides = isChecked('chkProofSides');
+      const showDiag = isChecked('chkProofDiag');
+      const showAlt = isChecked('chkProofAlt');
+      const showCorr = isChecked('chkProofCorr');
+      const showVert = isChecked('chkProofVert');
+
+      const L = isRh ? 175 : 190;
+      const { A, B, C, D } = getQuadPoints(proofShape, angleDeg, ratio, w, h, L);
+      const O = midPt(A, C);
+      const bdVisible = showDiag || showVert;
+      const acVisible = bdVisible || showAlt;
+
+      ctx.clearRect(0, 0, w, h);
+      gFillPoly(ctx, [A, B, C, D], isRh ? 'rgba(14, 165, 233, 0.08)' : 'rgba(99, 102, 241, 0.08)');
+
+      // 角の強調（線の下に描く）
+      if (showAlt) {
+        gAngle(ctx, A, D, C, 28, '#f59e0b', '●');
+        gAngle(ctx, C, B, A, 28, '#f59e0b', '●');
+        gAngle(ctx, A, B, C, 28, '#0ea5e9', '×');
+        gAngle(ctx, C, D, A, 28, '#0ea5e9', '×');
+      }
+      let E = null;
+      if (showCorr) {
+        E = { x: Math.min(C.x + 80, w - 18), y: C.y };
+        gLine(ctx, C, E, '#94a3b8', 2, [6, 4]);
+        gAngle(ctx, C, E, D, 22, '#e11d48', '▲');
+        gAngle(ctx, B, C, A, 22, '#e11d48', '▲');
+      }
+      if (showVert) {
+        gAngle(ctx, O, A, B, 18, '#8b5cf6', '◆');
+        gAngle(ctx, O, C, D, 18, '#8b5cf6', '◆');
+      }
+
+      // 対角線
+      if (acVisible) gLine(ctx, A, C, '#64748b', 1.8, showDiag ? [5, 4] : null);
+      if (bdVisible) gLine(ctx, B, D, '#64748b', 1.8, showDiag ? [5, 4] : null);
+      if (showDiag) {
+        gTicks(ctx, A, O, 1, '#0d9488');
+        gTicks(ctx, O, C, 1, '#0d9488');
+        gTicks(ctx, B, O, 2, '#c026d3');
+        gTicks(ctx, O, D, 2, '#c026d3');
+        if (isRh) gRightAngle(ctx, O, A, B, 10, '#e11d48');
+      }
+
+      // 辺
+      [[A, B], [B, C], [C, D], [D, A]].forEach(([p, q]) => gLine(ctx, p, q, '#1e293b', 2.5));
+      if (showPar) {
+        gParallelMark(ctx, A, D, 1);
+        gParallelMark(ctx, B, C, 1);
+        gParallelMark(ctx, B, A, 2);
+        gParallelMark(ctx, C, D, 2);
+      }
+      if (showSides) {
+        if (isRh) {
+          [[A, B], [B, C], [C, D], [D, A]].forEach(([p, q]) => gTicks(ctx, p, q, 1, '#e11d48'));
+        } else {
+          gTicks(ctx, A, B, 1, '#e11d48');
+          gTicks(ctx, D, C, 1, '#e11d48');
+          gTicks(ctx, A, D, 2, '#e11d48');
+          gTicks(ctx, B, C, 2, '#e11d48');
         }
-      };
+      }
 
-      const moveDrag = (e) => {
-        if (!draggingPoint) return;
-        e.preventDefault();
-        const pos = getPos(e);
-        const angle = Math.atan2(pos.y - canvas.height / 2, pos.x - canvas.width / 2);
-        if (draggingPoint === 'P') angP = angle;
-        if (draggingPoint === 'A') angA = angle;
-        if (draggingPoint === 'B') angB = angle;
-        drawCircle();
-      };
+      gLabel(ctx, A, 'A', O);
+      gLabel(ctx, B, 'B', O);
+      gLabel(ctx, C, 'C', O);
+      gLabel(ctx, D, 'D', O);
+      if (bdVisible) gLabel(ctx, O, 'O', O, [0, 16]);
+      if (E) gLabel(ctx, E, 'E', O, [0, 16]);
 
-      const endDrag = () => { draggingPoint = null; };
+      // 解説パネル
+      const scale = 6 / L; // BC＝6cm として表示
+      const ac = distPt(A, C) * scale;
+      const bd = distPt(B, D) * scale;
+      const aob = Math.round(angleDegAt(O, A, B));
+      const isPerp = aob === 90;
+      const diagEqual = Math.abs(ac - bd) < 0.05;
 
-      canvas.addEventListener('mousedown', startDrag);
-      window.addEventListener('mousemove', moveDrag);
-      window.addEventListener('mouseup', endDrag);
+      const props = isRh
+        ? ['4つの辺がすべて等しい（定義）', 'ひし形は平行四辺形でもある → 平行四辺形の性質はすべて使える', '対角線は垂直に交わる（AC⊥BD）', '対角線は頂点の角を2等分する（錯角を表示すると4つの●×がすべて等しくなる）']
+        : ['2組の対辺はそれぞれ平行（定義）', '2組の対辺はそれぞれ等しい（AB＝DC、AD＝BC）', '2組の対角はそれぞれ等しい（∠A＝∠C、∠B＝∠D）', '対角線はそれぞれの中点で交わる（OA＝OC、OB＝OD）'];
 
-      canvas.addEventListener('touchstart', startDrag, { passive: false });
-      canvas.addEventListener('touchmove', moveDrag, { passive: false });
-      window.addEventListener('touchend', endDrag);
+      const notes = [];
+      if (angleDeg === 90) {
+        notes.push(isRh
+          ? '∠B＝90° なので正方形（特別なひし形）。このときだけ対角線の長さも等しくなります。'
+          : '∠B＝90° なので長方形（特別な平行四辺形）。このときだけ対角線の長さが等しくなります。');
+      }
+      if (!isRh && Math.abs(ratio - 1) < 0.001) {
+        notes.push('AB＝BC なので、この平行四辺形はひし形です（隣り合う辺が等しい平行四辺形）。対角線が垂直になります。');
+      }
+
+      document.getElementById('proofInfoBox').innerHTML = `
+        <div class="font-bold text-indigo-900">${escapeHtml(isRh ? 'ひし形ABCD' : '平行四辺形ABCD')} の性質</div>
+        <ul class="list-disc pl-5 text-xs text-indigo-950 space-y-0.5">
+          ${props.map(p => `<li>${escapeHtml(p)}</li>`).join('')}
+        </ul>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+          <div class="bg-white rounded-lg p-2 border border-indigo-100">
+            <div class="text-slate-500 font-bold">角</div>
+            <div>∠B＝∠D＝<strong>${escapeHtml(angleDeg)}°</strong></div>
+            <div>∠A＝∠C＝<strong>${escapeHtml(180 - angleDeg)}°</strong></div>
+          </div>
+          <div class="bg-white rounded-lg p-2 border border-indigo-100">
+            <div class="text-slate-500 font-bold">対角線の交わる角</div>
+            <div>∠AOB＝<strong class="${isPerp ? 'text-rose-600' : ''}">${escapeHtml(aob)}°</strong></div>
+            <div>${escapeHtml(isPerp ? '→ 垂直' : '→ 垂直ではない')}</div>
+          </div>
+          <div class="bg-white rounded-lg p-2 border border-indigo-100">
+            <div class="text-slate-500 font-bold">対角線の長さ（BC＝6）</div>
+            <div>AC≒${escapeHtml(ac.toFixed(1))}、BD≒${escapeHtml(bd.toFixed(1))}</div>
+            <div>${escapeHtml(diagEqual ? '→ 等しい' : '→ 等しくない')}</div>
+          </div>
+        </div>
+        ${notes.map(n => `<div class="bg-amber-50 border border-amber-200 text-amber-900 rounded-lg p-2 text-xs font-bold">${escapeHtml(n)}</div>`).join('')}
+      `;
+    }
+
+    /* ---------- 証明演習ドリル（通信不要） ---------- */
+    const PROOF_DRILLS = [
+      {
+        title: '対角線の交点と三角形（平行四辺形）',
+        shape: 'para', angle: 60, ratio: 0.75,
+        extra: () => ({}),
+        lines: [['A', 'C'], ['B', 'D']],
+        tris: [['A', 'O', 'B'], ['C', 'O', 'D']],
+        labelOffsets: { O: [0, 16] },
+        question: '平行四辺形ABCDの対角線AC、BDの交点をOとする。\nこのとき、△AOB≡△COD であることを証明しなさい。',
+        hint: 'OA と OC、OB と OD の関係は「平行四辺形の対角線の性質」で言えます。点Oで交わる2本の直線がつくる角にも注目しよう。',
+        steps: ['△AOBと△CODにおいて', '平行四辺形の対角線はそれぞれの中点で交わるから　OA＝OC …①', '同様に　OB＝OD …②', '対頂角は等しいから　∠AOB＝∠COD …③', '①、②、③より、2組の辺とその間の角がそれぞれ等しいから', '△AOB≡△COD'],
+        points: ['「対角線の長さが等しい（AC＝BD）」は長方形の性質。平行四辺形では使えない。', '③の根拠「対頂角は等しい」を書き忘れると減点。', '合同の記号は対応する頂点の順（A↔C、O↔O、B↔D）にそろえて書く。', '別解：AB＝CD（対辺）と、AB∥DCより錯角 ∠OAB＝∠OCD、∠OBA＝∠ODC を使い「1組の辺とその両端の角」でも証明できる。'],
+        quiz: { q: 'OA＝OC の根拠として正しいものは？', choices: ['平行四辺形の2組の対辺はそれぞれ等しい', '平行四辺形の対角線はそれぞれの中点で交わる', '図で見ると同じ長さだから'], answer: 1, explain: 'OA・OCは対角線の一部。使うのは「対角線はそれぞれの中点で交わる」という性質です。対辺の性質は辺AB・CDなどに使います。' }
+      },
+      {
+        title: '対角線で2つに分けた三角形',
+        shape: 'para', angle: 60, ratio: 0.75,
+        extra: () => ({}),
+        lines: [['A', 'C']],
+        tris: [['A', 'B', 'C'], ['C', 'D', 'A']],
+        labelOffsets: {},
+        question: '平行四辺形ABCDに対角線ACをひく。\nこのとき、△ABC≡△CDA であることを証明しなさい。',
+        hint: '平行四辺形の対辺の性質で2組の辺が等しいと言えます。残り1組は2つの三角形に共通な辺です。',
+        steps: ['△ABCと△CDAにおいて', '平行四辺形の対辺はそれぞれ等しいから　AB＝CD …①', '同様に　BC＝DA …②', 'ACは共通 …③', '①、②、③より、3組の辺がそれぞれ等しいから', '△ABC≡△CDA'],
+        points: ['共通な辺は「ACは共通」とはっきり書く。書かないと根拠不足で減点。', '△ABC≡△CDA の対応は A↔C、B↔D、C↔A。「△ABC≡△ADC」のように順番を崩すと誤り。', 'AB＝CD を「平行四辺形だから」だけで済ませず、「平行四辺形の対辺は等しい」と性質まで書く。'],
+        quiz: { q: '△ABC≡△CDA のとき、辺ABに対応する辺は？', choices: ['CD', 'DA', 'AC'], answer: 0, explain: '頂点の順に A→C、B→D が対応するので、ABに対応するのはCDです。合同の式は対応する順に書くのが約束です。' }
+      },
+      {
+        title: '対角線上の点と三角形（錯角の取り違えに注意）',
+        shape: 'para', angle: 60, ratio: 0.75,
+        extra: (P) => ({ E: lerpPt(P.B, P.D, 0.28), F: lerpPt(P.B, P.D, 0.72) }),
+        lines: [['B', 'D'], ['A', 'E'], ['C', 'F']],
+        tris: [['A', 'B', 'E'], ['C', 'D', 'F']],
+        labelOffsets: { E: [12, 12], F: [-12, -12] },
+        question: '平行四辺形ABCDの対角線BD上に、BE＝DF となる点E、Fをとる。\nこのとき、△ABE≡△CDF であることを証明しなさい。',
+        hint: '∠ABE と ∠CDF は、平行な2直線 AB と DC に直線BDが交わってできる角です。',
+        steps: ['△ABEと△CDFにおいて', '平行四辺形の対辺はそれぞれ等しいから　AB＝CD …①', '仮定より　BE＝DF …②', 'AB∥DCより、錯角は等しいから　∠ABE＝∠CDF …③', '①、②、③より、2組の辺とその間の角がそれぞれ等しいから', '△ABE≡△CDF'],
+        points: ['錯角の根拠を「AD∥BCより」と書くのは誤り。∠ABEと∠CDFをつくる平行線は AB と DC。', '「仮定より」を書かずに BE＝DF を使うと減点。', '③の角が、①②の辺の「間の角」になっているか必ず確認する。'],
+        quiz: { q: '∠ABE＝∠CDF の根拠として正しいものは？', choices: ['AD∥BCより、錯角は等しい', 'AB∥DCより、錯角は等しい', '対頂角は等しい'], answer: 1, explain: '∠ABEはABとBD、∠CDFはDCとBDでできる角。平行線ABとDCに直線BDが交わってできる錯角です。' }
+      },
+      {
+        title: '交点Oを通る直線（対頂角と錯角）',
+        shape: 'para', angle: 60, ratio: 0.75,
+        extra: (P) => {
+          const O = midPt(P.A, P.C);
+          const E = lerpPt(P.A, P.D, 0.3);
+          return { O, E, F: { x: 2 * O.x - E.x, y: 2 * O.y - E.y } };
+        },
+        lines: [['A', 'C'], ['E', 'F']],
+        tris: [['A', 'O', 'E'], ['C', 'O', 'F']],
+        labelOffsets: { O: [16, 2] },
+        question: '平行四辺形ABCDの対角線の交点をOとし、Oを通る直線が辺AD、BCと交わる点をそれぞれE、Fとする。\nこのとき、△AOE≡△COF であることを証明しなさい。',
+        hint: 'OA＝OC（対角線の性質）、点Oでの対頂角、AD∥BC の錯角の3つを使います。',
+        steps: ['△AOEと△COFにおいて', '平行四辺形の対角線はそれぞれの中点で交わるから　OA＝OC …①', '対頂角は等しいから　∠AOE＝∠COF …②', 'AD∥BCより、錯角は等しいから　∠OAE＝∠OCF …③', '①、②、③より、1組の辺とその両端の角がそれぞれ等しいから', '△AOE≡△COF'],
+        points: ['「OE＝OF」は合同を示した後で分かること。証明の途中で根拠に使うと循環論法になり誤り。', '合同条件は「1組の辺とその両端の角」。辺OAの両端（A・O）の角を使っているか確認する。', '錯角は AD∥BC によるもの（辺AD上のEと辺BC上のF）であることを明記する。'],
+        quiz: { q: '∠AOE＝∠COF の根拠は？', choices: ['対頂角は等しい', '錯角は等しい', '平行四辺形の対角は等しい'], answer: 0, explain: '直線EFと直線ACが点Oで交わってできる、向かい合った角なので「対頂角」です。' }
+      },
+      {
+        title: 'ひし形の対角線が垂直になる理由',
+        shape: 'rhombus', angle: 60, ratio: 1,
+        extra: () => ({}),
+        lines: [['A', 'C'], ['B', 'D']],
+        tris: [['A', 'B', 'O'], ['A', 'D', 'O']],
+        labelOffsets: { O: [0, 16] },
+        question: 'ひし形ABCDの対角線の交点をOとする。\n(1) △ABO≡△ADO であることを証明しなさい。\n(2) (1)を利用して、AC⊥BD であることを説明しなさい。',
+        hint: 'ひし形は4辺が等しい（AB＝AD）。また、ひし形は平行四辺形でもあるので、対角線はそれぞれの中点で交わります（BO＝DO）。',
+        steps: ['(1) △ABOと△ADOにおいて', 'ひし形の4つの辺は等しいから　AB＝AD …①', 'ひし形は平行四辺形なので、対角線はそれぞれの中点で交わるから　BO＝DO …②', 'AOは共通 …③', '①、②、③より、3組の辺がそれぞれ等しいから　△ABO≡△ADO', '(2) 合同な図形の対応する角は等しいから　∠AOB＝∠AOD', '∠AOB＋∠AOD＝180° より　∠AOB＝90°', 'よって　AC⊥BD'],
+        points: ['(1)で「ひし形の対角線は垂直に交わる」を根拠に使うのは×。それこそが(2)で示したいこと（循環論法）。', 'BO＝DO の根拠は「ひし形は平行四辺形だから、対角線はそれぞれの中点で交わる」と、平行四辺形であることを経由して書く。', '「AOは共通」を忘れずに書く。', '∠AOB＋∠AOD＝180°（一直線）を書いてから 90° を導く。'],
+        quiz: { q: 'この問題の(1)で「ひし形の対角線は垂直に交わる」を根拠に使ってよい？', choices: ['使ってよい（ひし形の性質だから）', '使ってはいけない（(2)で示す結論を先に使うことになる）'], answer: 1, explain: '示したい結論を根拠に使うと「循環論法」になり、証明として認められません。問題が何を示させたいのかを確認しよう。' }
+      },
+      {
+        title: 'ひし形の辺上の点と三角形',
+        shape: 'rhombus', angle: 65, ratio: 1,
+        extra: (P) => ({ E: lerpPt(P.B, P.C, 0.4), F: lerpPt(P.D, P.C, 0.4) }),
+        lines: [['A', 'E'], ['A', 'F']],
+        tris: [['A', 'B', 'E'], ['A', 'D', 'F']],
+        labelOffsets: {},
+        question: 'ひし形ABCDの辺BC、CD上に、BE＝DF となる点E、Fをそれぞれとる。\nこのとき、△ABE≡△ADF であることを証明しなさい。',
+        hint: 'AB＝AD はひし形の「4辺が等しい」から。∠B と ∠D は平行四辺形の「対角」です（ひし形は平行四辺形）。',
+        steps: ['△ABEと△ADFにおいて', 'ひし形の4つの辺は等しいから　AB＝AD …①', '仮定より　BE＝DF …②', 'ひし形は平行四辺形なので、対角は等しいから　∠ABE＝∠ADF …③', '①、②、③より、2組の辺とその間の角がそれぞれ等しいから', '△ABE≡△ADF'],
+        points: ['AB＝AD を「平行四辺形の対辺は等しい」としてはいけない。ABとADは隣り合う辺なので、ひし形の「4辺が等しい」を使う。', '③で「AB＝ADより二等辺三角形の底角」とするのは誤り（それは∠ABDと∠ADBの関係）。', '「ひし形は平行四辺形なので」と一言入れると根拠がはっきりする。'],
+        quiz: { q: '∠ABE＝∠ADF の根拠として最も適切なのは？', choices: ['ひし形は平行四辺形なので、対角は等しい', 'AB＝ADなので、二等辺三角形の底角は等しい', '図で同じ大きさに見える'], answer: 0, explain: '∠ABE（＝∠ABC）と∠ADF（＝∠ADC）は向かい合う角＝対角です。二等辺三角形の底角は△ABDの∠ABDと∠ADBのことで、別の角です。' }
+      },
+      {
+        title: '垂線と直角三角形の合同',
+        shape: 'para', angle: 60, ratio: 0.8,
+        extra: (P) => ({ E: footPt(P.A, P.B, P.D), F: footPt(P.C, P.B, P.D) }),
+        lines: [['B', 'D'], ['A', 'E'], ['C', 'F']],
+        tris: [['A', 'B', 'E'], ['C', 'D', 'F']],
+        rights: [['E', 'A', 'B'], ['F', 'C', 'D']],
+        labelOffsets: { E: [12, 12], F: [-12, -12] },
+        question: '平行四辺形ABCDの頂点A、Cから対角線BDにそれぞれ垂線AE、CFをひく。\nこのとき、△ABE≡△CDF であることを証明しなさい。',
+        hint: '∠AEB＝∠CFD＝90° の直角三角形です。斜辺（AB と CD）と、もう1つの鋭角に注目しよう。',
+        steps: ['△ABEと△CDFにおいて', '仮定より　∠AEB＝∠CFD＝90° …①', '平行四辺形の対辺はそれぞれ等しいから　AB＝CD …②', 'AB∥DCより、錯角は等しいから　∠ABE＝∠CDF …③', '①、②、③より、直角三角形の斜辺と1つの鋭角がそれぞれ等しいから', '△ABE≡△CDF'],
+        points: ['直角三角形の合同条件を使うときは、①で「直角であること」を必ず書く。', '「斜辺と1つの鋭角」か「斜辺と他の1辺」かを正しく選ぶ。等しい辺はABとCDだけなので「斜辺と1つの鋭角」。', 'AB、CDが斜辺（直角に向かい合う辺）になっていることを確認する。'],
+        quiz: { q: 'この証明で使う合同条件は？', choices: ['直角三角形の斜辺と1つの鋭角がそれぞれ等しい', '直角三角形の斜辺と他の1辺がそれぞれ等しい', '2組の辺とその間の角がそれぞれ等しい'], answer: 0, explain: '等しいと分かるのは、直角・斜辺AB＝CD・鋭角∠ABE＝∠CDF。辺は1組だけなので「斜辺と1つの鋭角」です。' }
+      },
+      {
+        title: '中点を結んでできる三角形',
+        shape: 'para', angle: 65, ratio: 0.75,
+        extra: (P) => ({ M: midPt(P.A, P.D), N: midPt(P.B, P.C) }),
+        lines: [['A', 'N'], ['C', 'M']],
+        tris: [['A', 'B', 'N'], ['C', 'D', 'M']],
+        labelOffsets: {},
+        question: '平行四辺形ABCDの辺AD、BCの中点をそれぞれM、Nとする。\nこのとき、△ABN≡△CDM であることを証明しなさい。',
+        hint: 'BN と DM はそれぞれ BC、AD の半分。BC＝AD（対辺）から BN＝DM が言えます。∠B と ∠D は対角です。',
+        steps: ['△ABNと△CDMにおいて', '平行四辺形の対辺はそれぞれ等しいから　AB＝CD …①', '平行四辺形の対角はそれぞれ等しいから　∠ABN＝∠CDM …②', 'BC＝AD で、M、Nはそれぞれ AD、BC の中点だから　BN＝1/2 BC＝1/2 AD＝DM …③', '①、②、③より、2組の辺とその間の角がそれぞれ等しいから', '△ABN≡△CDM'],
+        points: ['BN＝DM をいきなり書くのは×。「BC＝AD」と「中点」の2つの根拠をセットで書く。', '∠B＝∠D は「平行四辺形の対角」。錯角ではない。', '②の角が辺ABとBN、辺CDとDMの「間の角」になっているか確認する。'],
+        quiz: { q: 'BN＝DM を示すのに必要な根拠は？', choices: ['BC＝AD（対辺）と、M・Nがそれぞれ中点であること', '対角線がそれぞれの中点で交わること', 'AB∥DC であること'], answer: 0, explain: 'BNはBCの半分、DMはADの半分。だから「BC＝AD」と「中点」の両方が必要です。' }
+      }
+    ];
+
+    function drawProofDrillFigure(item) {
+      const canvas = document.getElementById('proofDrillCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const w = canvas.width, h = canvas.height;
+      const L = item.shape === 'rhombus' ? 170 : 200;
+      const quad = getQuadPoints(item.shape, item.angle, item.ratio, w, h, L);
+      const center = midPt(quad.A, quad.C);
+      const P = { ...quad, O: center, ...item.extra(quad) };
+
+      ctx.clearRect(0, 0, w, h);
+      const triColors = ['rgba(99, 102, 241, 0.28)', 'rgba(244, 63, 94, 0.25)'];
+      item.tris.forEach((tri, i) => gFillPoly(ctx, tri.map(k => P[k]), triColors[i]));
+
+      [[P.A, P.B], [P.B, P.C], [P.C, P.D], [P.D, P.A]].forEach(([p, q]) => gLine(ctx, p, q, '#1e293b', 2.5));
+      item.lines.forEach(([a, b]) => gLine(ctx, P[a], P[b], '#475569', 2));
+      (item.rights || []).forEach(([v, p1, p2]) => gRightAngle(ctx, P[v], P[p1], P[p2], 10));
+
+      const used = new Set(['A', 'B', 'C', 'D']);
+      item.lines.forEach(pair => pair.forEach(k => used.add(k)));
+      item.tris.forEach(tri => tri.forEach(k => used.add(k)));
+      used.forEach(k => gLabel(ctx, P[k], k, center, item.labelOffsets[k] || null));
+    }
+
+    function renderProofDrill() {
+      const select = document.getElementById('proofDrillSelect');
+      if (!select) return;
+      if (select.options.length === 0) {
+        select.innerHTML = PROOF_DRILLS.map((d, i) => `<option value="${i}">問題${i + 1}：${escapeHtml(d.title)}</option>`).join('');
+      }
+      select.value = String(proofDrillIndex);
+
+      const item = PROOF_DRILLS[proofDrillIndex];
+      drawProofDrillFigure(item);
+
+      document.getElementById('proofDrillCard').innerHTML = `
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="text-xs font-bold px-2 py-0.5 rounded bg-sky-100 text-sky-800">問題 ${proofDrillIndex + 1} / ${PROOF_DRILLS.length}</span>
+          <span class="text-xs font-bold px-2 py-0.5 rounded bg-slate-200 text-slate-700">${escapeHtml(item.shape === 'rhombus' ? 'ひし形' : '平行四辺形')}</span>
+        </div>
+        <div class="font-bold text-slate-800 text-base">${escapeHtml(item.title)}</div>
+        <div class="bg-white border border-slate-200 p-3 rounded-lg whitespace-pre-wrap font-medium text-slate-800">${escapeHtml(item.question)}</div>
+
+        <div class="bg-white border border-sky-200 p-3 rounded-lg space-y-2">
+          <div class="text-xs font-bold text-sky-800">🔍 根拠チェック（間違えやすいポイント）</div>
+          <p class="text-sm font-bold text-slate-800">${escapeHtml(item.quiz.q)}</p>
+          <div class="flex flex-col gap-1.5">
+            ${item.quiz.choices.map((c, i) => `<button onclick="answerProofQuiz(${i})" class="proof-quiz-btn text-left px-3 py-2 rounded-lg border border-slate-300 bg-slate-50 hover:bg-sky-50 text-xs font-bold text-slate-700 transition">${escapeHtml(c)}</button>`).join('')}
+          </div>
+          <div id="proofQuizResult" class="hidden text-xs p-2 rounded-lg"></div>
+        </div>
+
+        <details class="bg-amber-50 border border-amber-200 rounded-lg p-2.5">
+          <summary class="font-bold text-amber-800 text-xs cursor-pointer">💡 ヒントを見る</summary>
+          <p class="mt-1.5 text-xs text-amber-900">${escapeHtml(item.hint)}</p>
+        </details>
+        <details class="bg-indigo-50 border border-indigo-200 rounded-lg p-2.5">
+          <summary class="font-bold text-indigo-800 text-xs cursor-pointer">📝 証明の流れ（模範解答）を見る</summary>
+          <ol class="mt-1.5 text-xs text-indigo-950 space-y-1 list-none">
+            ${item.steps.map(s => `<li>${escapeHtml(s)}</li>`).join('')}
+          </ol>
+        </details>
+        <details class="bg-rose-50 border border-rose-200 rounded-lg p-2.5">
+          <summary class="font-bold text-rose-800 text-xs cursor-pointer">⚠️ 減点注意ポイントを見る</summary>
+          <ul class="mt-1.5 text-xs text-rose-900 space-y-1 list-disc pl-4">
+            ${item.points.map(p => `<li>${escapeHtml(p)}</li>`).join('')}
+          </ul>
+        </details>
+      `;
+    }
+
+    function answerProofQuiz(choiceIdx) {
+      const item = PROOF_DRILLS[proofDrillIndex];
+      const correct = choiceIdx === item.quiz.answer;
+      document.querySelectorAll('#proofDrillCard .proof-quiz-btn').forEach((btn, i) => {
+        btn.classList.remove('bg-emerald-100', 'border-emerald-400', 'bg-rose-100', 'border-rose-400');
+        if (i === item.quiz.answer) btn.classList.add('bg-emerald-100', 'border-emerald-400');
+        else if (i === choiceIdx) btn.classList.add('bg-rose-100', 'border-rose-400');
+      });
+      const result = document.getElementById('proofQuizResult');
+      result.className = `text-xs p-2 rounded-lg font-bold ${correct ? 'bg-emerald-50 text-emerald-800' : 'bg-rose-50 text-rose-800'}`;
+      result.textContent = `${correct ? '⭕ 正解！' : '❌ おしい！'} ${item.quiz.explain}`;
+    }
+
+    function selectProofDrill(value) {
+      const idx = Number(value);
+      if (Number.isInteger(idx) && idx >= 0 && idx < PROOF_DRILLS.length) {
+        proofDrillIndex = idx;
+        renderProofDrill();
+      }
+    }
+
+    function nextProofDrill(step) {
+      proofDrillIndex = (proofDrillIndex + step + PROOF_DRILLS.length) % PROOF_DRILLS.length;
+      renderProofDrill();
+    }
+
+    function sendProofToNotes() {
+      const item = PROOF_DRILLS[proofDrillIndex];
+      notesData.unshift({
+        id: Date.now(),
+        topic: '平行四辺形・ひし形の証明',
+        type: 'question',
+        text: `${item.title}：${item.question.replace(/\n/g, ' ')}`,
+        resolved: false,
+        createdAt: new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })
+      });
+      saveNotesStorage();
+      alert('学習メモボードにこの問題を追加しました！');
     }
 
     /* ==================== 4. 学習メモボード ==================== */
@@ -1394,7 +1836,7 @@
     function sendNoteToAi(id) {
       const target = notesData.find(n => n.id === id);
       if (!target) return;
-      const aiTabBtn = document.querySelectorAll('.tab-btn')[4];
+      const aiTabBtn = document.querySelector('.tab-btn[onclick^="switchTab(\'ai\'"]');
       switchTab('ai', aiTabBtn);
       document.getElementById('aiQuestionInput').value = `【単元：${target.topic}】\n${target.text}`;
       askGeminiTutor();
@@ -1580,7 +2022,10 @@
       out.innerHTML = `<div class="p-3 bg-slate-50 rounded-lg text-xs text-slate-500">問題を作成しています（${count}題）...</div>`;
 
       try {
-        const prompt = `中学3年生の定期テスト対策用に、「${topic}」の練習問題を${count}題作成してください（難易度：${level}）。
+        const proofNote = topic.includes('証明')
+          ? '\n図は表示できないため、問題文の中で頂点や点の位置関係を文章ではっきり説明してください。answerには「仮定」「結論」と、根拠（平行線の錯角・同位角、対頂角、共通な辺、平行四辺形・ひし形の性質など）を1行ずつ明記した証明を書き、最後に減点されやすい注意点を添えてください。'
+          : '';
+        const prompt = `中学生の定期テスト対策用に、「${topic}」の練習問題を${count}題作成してください（難易度：${level}）。${proofNote}
 必ず以下のJSON配列形式のみで出力してください（Markdownのコードブロック記号は不要です）：
 [{"problem":"問題文","hint":"解き方のヒント","answer":"答えと詳しい解説"}]`;
         let raw = await callGemini(prompt);
@@ -1661,8 +2106,8 @@
       drawMovingScene();
       updateParaSim();
       generateAutoDrill();
-      setupCircleEvents();
-      drawCircle();
+      drawProofSim();
+      renderProofDrill();
       renderNotes();
       checkRemoteUpdate(false);
     });
