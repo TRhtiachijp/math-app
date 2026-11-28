@@ -436,7 +436,8 @@
           <input type="file" id="notePhotoCamera" accept="image/*" capture="environment" class="hidden" onchange="handleNotePhoto(this)">
           <label for="notePhotoFile" class="cursor-pointer px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-xs transition">🖼️ 画像を選ぶ</label>
           <input type="file" id="notePhotoFile" accept="image/*" class="hidden" onchange="handleNotePhoto(this)">
-          <span id="notePhotoStatus" class="text-xs text-slate-500">わからない問題の写真を添付できます（自動で縮小して保存）</span>
+          <button onclick="pastePhotoFromClipboard()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-xs transition">📋 画像を貼り付け</button>
+          <span id="notePhotoStatus" class="text-xs text-slate-500">わからない問題の写真を添付できます（自動で縮小して保存。この画面で Ctrl+V / 長押し→ペーストでも貼り付け可）</span>
         </div>
         <div id="notePhotoPreview" class="hidden flex flex-wrap items-start gap-3 bg-slate-50 border border-slate-200 rounded-lg p-2">
           <img id="notePhotoPreviewImg" alt="添付写真のプレビュー" class="max-h-32 max-w-[60%] rounded border border-slate-300 object-contain bg-white">
@@ -446,10 +447,29 @@
           </div>
         </div>
 
-        <div class="flex justify-end">
+        <div class="flex flex-wrap justify-between items-center gap-2">
+          <div class="flex flex-wrap items-center gap-x-3 gap-y-1 min-w-0">
+            <label id="gasSendWrap" class="hidden flex items-center gap-1.5 text-xs font-bold text-slate-700 cursor-pointer">
+              <input type="checkbox" id="gasSendChk" checked onchange="saveGasSendPref()" class="w-4 h-4 accent-sky-600">☁ クラス共有（先生の画面）にも送信
+            </label>
+            <span id="noteSyncStatus" class="text-xs font-bold whitespace-pre-line"></span>
+          </div>
           <button onclick="addNote()" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-sm shadow-sm transition">
             ＋ メモを追加
           </button>
+        </div>
+
+        <!-- Googleカレンダーに復習予定を追加 -->
+        <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100 text-xs">
+          <span class="font-bold text-slate-600">📅 Googleカレンダーに予定を追加：</span>
+          <select id="calTitle" class="p-1.5 border border-slate-300 rounded-lg bg-slate-50 font-bold">
+            <option value="定期テスト（数学）">定期テスト（数学）</option>
+            <option value="復習：2次関数・放物線と面積">復習：2次関数・放物線と面積</option>
+            <option value="復習：平行四辺形・ひし形の合同の証明">復習：平行四辺形・ひし形の証明</option>
+            <option value="unresolved">復習：未解決の学習メモ</option>
+          </select>
+          <input type="date" id="calDate" class="p-1.5 border border-slate-300 rounded-lg bg-slate-50">
+          <button onclick="openCalendarFromWidget()" class="px-3 py-1.5 bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 font-bold rounded-lg transition">📅 カレンダーに追加</button>
         </div>
       </div>
 
@@ -485,6 +505,30 @@
             <div id="importStatus" class="hidden text-xs p-2 rounded-lg"></div>
           </div>
         </div>
+      </div>
+
+      <!-- クラス共有ボード（Google Apps Script 連携・先生用） -->
+      <div id="classBoardCard" class="bg-white p-4 md:p-5 rounded-xl shadow-sm border border-slate-200 space-y-3">
+        <div class="flex flex-wrap justify-between items-center gap-2">
+          <div class="min-w-0">
+            <h3 class="text-base font-bold text-slate-800">🏫 クラス共有ボード（先生用・自動更新）</h3>
+            <p id="classBoardStatus" class="text-xs text-slate-500"></p>
+          </div>
+          <div id="classBoardControls" class="flex flex-wrap items-center gap-x-3 gap-y-2">
+            <label class="flex items-center gap-1.5 text-xs font-bold text-slate-700 cursor-pointer">
+              <input type="checkbox" id="teacherModeChk" onchange="setTeacherMode(this.checked)" class="w-4 h-4 accent-indigo-600">先生モード（投稿を表示）
+            </label>
+            <label class="flex items-center gap-1.5 text-xs font-bold text-slate-700 cursor-pointer">
+              <input type="checkbox" id="classAutoChk" checked onchange="setClassAuto(this.checked)" class="w-4 h-4 accent-indigo-600">自動更新（8秒ごと）
+            </label>
+            <button onclick="refreshClassBoard(true)" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-xs shadow-sm transition">🔄 今すぐ更新</button>
+          </div>
+        </div>
+        <div id="classBoardSetupHint" class="hidden text-xs bg-slate-50 border border-slate-200 rounded-lg p-3 text-slate-600 leading-relaxed">
+          右上の「⚙ 設定」で <strong>共有用 Google Apps Script（GAS）Webアプリ URL</strong> を登録すると、生徒が投稿したメモと写真がここに数秒で表示されます。未設定でも、上の「共有コード」で受け渡しできます。
+          <button onclick="openApiModal()" class="ml-1 font-bold text-indigo-700 underline">設定を開く</button>
+        </div>
+        <div id="classBoardList" class="space-y-2.5"></div>
       </div>
 
       <div id="notesList" class="space-y-2.5"></div>
@@ -585,7 +629,7 @@
   <div id="apiModal" class="hidden fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4 overflow-y-auto">
     <div class="bg-white rounded-2xl max-w-lg w-full p-5 shadow-xl space-y-4 my-auto">
       <div class="flex justify-between items-center border-b pb-2">
-        <h3 class="text-lg font-bold text-slate-800">⚙️ APIキー設定</h3>
+        <h3 class="text-lg font-bold text-slate-800">⚙️ 設定（APIキー・クラス共有）</h3>
         <button onclick="closeApiModal()" class="text-slate-400 hover:text-slate-600 text-xl font-bold">&times;</button>
       </div>
 
@@ -599,8 +643,30 @@
         </div>
       </div>
 
+      <hr class="border-slate-200">
+
+      <!-- クラス共有（Google Apps Script）設定 -->
+      <div class="space-y-2">
+        <label for="gasUrlInput" class="block text-xs font-bold text-slate-700">クラス共有用 Google Apps Script（GAS）Webアプリ URL</label>
+        <input type="url" id="gasUrlInput" placeholder="https://script.google.com/macros/s/xxxx/exec" class="w-full p-2.5 border border-slate-300 rounded-lg text-xs font-mono">
+        <label for="gasRoomInput" class="block text-xs font-bold text-slate-700">ルーム／クラスID（英数字・- ・_ のみ。未入力なら「math-class」）</label>
+        <input type="text" id="gasRoomInput" maxlength="40" placeholder="math-class" class="w-full p-2.5 border border-slate-300 rounded-lg text-sm font-mono">
+        <p class="text-[11px] text-slate-500 leading-relaxed">先生と生徒の端末で同じURL・ルームIDを設定します。URLとルームIDを知っている人は投稿を見られるため、ルームIDは推測されにくいもの（例：3-1-x7k2）がおすすめです。</p>
+        <div class="flex flex-wrap justify-between items-center gap-2">
+          <div class="flex flex-wrap gap-3">
+            <button onclick="clearGasConfig()" class="text-xs font-bold text-rose-600 hover:underline">共有設定を削除</button>
+            <button onclick="copyGasCode()" class="text-xs font-bold text-indigo-700 hover:underline">📋 GAS用コードをコピー</button>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="testGasConnection()" class="px-3 py-1.5 text-xs font-bold bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg">接続テスト</button>
+            <button onclick="saveGasConfig()" class="px-4 py-1.5 text-xs font-bold bg-sky-600 text-white hover:bg-sky-700 rounded-lg">共有設定を保存</button>
+          </div>
+        </div>
+        <div id="gasConfigStatus" class="hidden text-xs p-2 rounded-lg"></div>
+      </div>
+
       <p class="text-[11px] text-slate-500 leading-relaxed bg-slate-50 border border-slate-200 rounded-lg p-2.5">
-        APIキーはこの端末のブラウザ内（localStorage）にのみ保存されます。共用端末では使用後に「キーを削除」を押してください。<br>
+        APIキー・共有設定はこの端末のブラウザ内（localStorage）にのみ保存されます。共用端末では使用後に「キーを削除」を押してください。<br>
         公開サイトが更新されると自動で通知されます（右上の「🔄 更新確認」でも確認できます）。
       </p>
 
@@ -609,6 +675,130 @@
       </div>
     </div>
   </div>
+
+  <!-- クラス共有用 Google Apps Script のコード（実行はされない。設定画面の「GAS用コードをコピー」で使う） -->
+  <script type="text/plain" id="gasCodeTemplate">
+/**
+ * 中学数学 総合マスター Lab ― クラス共有用 Google Apps Script
+ * 使い方：Googleスプレッドシート →［拡張機能］→［Apps Script］にこのコードを貼り付け、
+ * ［デプロイ］→［新しいデプロイ］→ 種類「ウェブアプリ」、
+ * 実行ユーザー「自分」、アクセスできるユーザー「全員」でデプロイし、表示されたURLをアプリの設定に登録します。
+ */
+const SHEET_NAME = 'notes';
+const CHUNK = 45000;        // 1セルの上限（50,000文字）未満に写真を分割して保存
+const MAX_PHOTO = 700000;   // 写真1枚の上限（data URL の文字数）
+const MAX_READ_ROWS = 200;  // 1回の取得で読む最大行数
+const HEADERS = ['receivedAt', 'room', 'uid', 'from', 'topic', 'type', 'text', 'resolved', 'createdAt', 'photoChunks'];
+
+function getSheet_() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sh = ss.getSheetByName(SHEET_NAME);
+  if (!sh) {
+    sh = ss.insertSheet(SHEET_NAME);
+    sh.appendRow(HEADERS);
+    sh.setFrozenRows(1);
+  }
+  return sh;
+}
+
+function json_(obj) {
+  return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
+}
+
+function str_(v, max) {
+  return String(v == null ? '' : v).slice(0, max);
+}
+
+function cell_(v) {
+  return String(v == null ? '' : v).replace(/^'/, '');
+}
+
+function validRoom_(room) {
+  return /^[A-Za-z0-9_-]{1,40}$/.test(room);
+}
+
+function doGet(e) {
+  const p = (e && e.parameter) || {};
+  if (p.action === 'ping') return json_({ ok: true, app: 'math-lab-share' });
+  if (p.action !== 'list') return json_({ ok: false, error: 'unknown action' });
+
+  const room = str_(p.room, 40);
+  if (!validRoom_(room)) return json_({ ok: false, error: 'invalid room' });
+  const since = Math.max(1, parseInt(p.since, 10) || 1); // seq = シートの行番号（1行目は見出し）
+  const limit = Math.min(50, Math.max(1, parseInt(p.limit, 10) || 30));
+
+  const sh = getSheet_();
+  const total = sh.getLastRow();
+  const notes = [];
+  let scanned = Math.min(since, total);
+  if (total > since) {
+    const count = Math.min(total - since, MAX_READ_ROWS);
+    const rows = sh.getRange(since + 1, 1, count, sh.getLastColumn()).getValues();
+    for (let i = 0; i < rows.length; i++) {
+      const r = rows[i];
+      scanned = since + 1 + i;
+      if (cell_(r[1]) !== room) continue;
+      const chunks = parseInt(cell_(r[9]), 10) || 0;
+      notes.push({
+        seq: scanned,
+        receivedAt: cell_(r[0]),
+        uid: cell_(r[2]),
+        from: cell_(r[3]),
+        topic: cell_(r[4]),
+        type: cell_(r[5]),
+        text: cell_(r[6]),
+        resolved: cell_(r[7]) === 'true',
+        createdAt: cell_(r[8]),
+        photo: chunks ? r.slice(10, 10 + chunks).map(cell_).join('') : null
+      });
+      if (notes.length >= limit) break;
+    }
+  }
+  return json_({ ok: true, notes: notes, last: scanned, total: total, more: scanned < total });
+}
+
+function doPost(e) {
+  const lock = LockService.getScriptLock();
+  try {
+    const body = JSON.parse((e && e.postData && e.postData.contents) || '{}');
+    if (body.action !== 'post') return json_({ ok: false, error: 'unknown action' });
+    const room = str_(body.room, 40);
+    if (!validRoom_(room)) return json_({ ok: false, error: 'invalid room' });
+
+    const n = body.note || {};
+    const uid = str_(n.uid, 64);
+    if (!/^[A-Za-z0-9_-]{1,64}$/.test(uid)) return json_({ ok: false, error: 'invalid uid' });
+    const text = str_(n.text, 2000);
+    const photo = typeof n.photo === 'string' ? n.photo : '';
+    if (photo && (photo.length > MAX_PHOTO || !/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/]+={0,2}$/.test(photo))) {
+      return json_({ ok: false, error: 'invalid photo' });
+    }
+    if (!text && !photo) return json_({ ok: false, error: 'empty note' });
+
+    lock.waitLock(10000);
+    const sh = getSheet_();
+    const found = sh.getRange(1, 3, Math.max(1, sh.getLastRow()), 1)
+      .createTextFinder(uid).matchEntireCell(true).findNext();
+    if (found) return json_({ ok: true, duplicate: true, seq: found.getRow() });
+
+    const chunks = [];
+    for (let i = 0; i < photo.length; i += CHUNK) chunks.push(photo.slice(i, i + CHUNK));
+    // 先頭に ' を付けて、数式・日付として解釈されないようにする
+    const values = [
+      new Date().toISOString(), room, uid, str_(n.from, 30), str_(n.topic, 40),
+      n.type === 'point' ? 'point' : 'question', text, n.resolved === true ? 'true' : 'false',
+      str_(n.createdAt, 40), String(chunks.length)
+    ].concat(chunks).map(function (v) { return "'" + v; });
+    const row = sh.getLastRow() + 1;
+    sh.getRange(row, 1, 1, values.length).setValues([values]);
+    return json_({ ok: true, seq: row });
+  } catch (err) {
+    return json_({ ok: false, error: str_(err && err.message ? err.message : err, 200) });
+  } finally {
+    try { lock.releaseLock(); } catch (e) {}
+  }
+}
+  </script>
 
   <script>
     /* ==================== タブ切り替え ==================== */
@@ -634,6 +824,8 @@
       } else if (tabId === 'proof') {
         drawProofSim();
         renderProofDrill();
+      } else if (tabId === 'notes') {
+        refreshClassBoard(false);
       }
       checkRemoteUpdate(false);
     }
@@ -1915,6 +2107,8 @@
         from: String(raw.from ?? '').trim().slice(0, 30),
         photo
       };
+      // クラス共有への送信状態は自分の端末のメモだけが持つ
+      if (keepId && typeof raw.synced === 'boolean') note.synced = raw.synced;
       if (typeof raw.uid === 'string' && /^[A-Za-z0-9_-]{1,64}$/.test(raw.uid)) {
         note.uid = raw.uid;
       } else if (keepId && Number.isSafeInteger(raw.id)) {
@@ -1992,8 +2186,15 @@
         photo: pendingNotePhoto
       });
       if (ok) {
+        const saved = notesData[0];
         input.value = '';
         clearNotePhoto();
+        // ローカル保存が済んでからクラス共有へ送る（失敗してもメモは残る）
+        if (getGasConfig().url && document.getElementById('gasSendChk').checked) {
+          syncNoteToClass(saved.id);
+        } else {
+          setNoteSyncStatus('', '');
+        }
       }
     }
 
@@ -2063,6 +2264,11 @@
       const file = inputEl.files && inputEl.files[0];
       inputEl.value = ''; // 同じ写真を選び直せるようにする
       if (!file) return;
+      await processPhotoFile(file);
+    }
+
+    // ファイル選択・カメラ撮影・貼り付けの共通処理（Canvasで縮小・JPEG圧縮）
+    async function processPhotoFile(file) {
       if (file.type && !file.type.startsWith('image/')) return alert('画像ファイルを選んでください。');
       if (file.size > 30 * 1024 * 1024) return alert('画像が大きすぎます（30MBまで）。');
 
@@ -2096,8 +2302,44 @@
       document.getElementById('notePhotoStatus').textContent = 'わからない問題の写真を添付できます（自動で縮小して保存）';
     }
 
+    // 「📋 画像を貼り付け」ボタン（Async Clipboard API / ClipboardItem）
+    async function pastePhotoFromClipboard() {
+      const fallbackMsg = 'このブラウザではボタンから画像を読み取れませんでした。\n画像をコピーしてから、この画面で Ctrl+V（スマホ・iPadはメモ入力欄を長押し→「ペースト」）で貼り付けてください。';
+      if (!navigator.clipboard || !navigator.clipboard.read) return alert(fallbackMsg);
+      try {
+        const items = await navigator.clipboard.read();
+        for (const item of items) {
+          const type = item.types.find(t => t.startsWith('image/'));
+          if (type) {
+            const blob = await item.getType(type);
+            await processPhotoFile(new File([blob], 'pasted-image', { type }));
+            return;
+          }
+        }
+        alert('クリップボードに画像がありません。問題の画像をコピーしてからもう一度押してください。');
+      } catch (e) {
+        alert(fallbackMsg);
+      }
+    }
+
+    // Ctrl+V / ペーストで画像を添付（学習メモ画面を表示中のみ。テキストの貼り付けは邪魔しない）
+    document.addEventListener('paste', (e) => {
+      const notesView = document.getElementById('notesModule');
+      if (!notesView || notesView.classList.contains('hidden')) return;
+      const target = e.target instanceof Element ? e.target : null;
+      const field = target && target.closest('input, textarea');
+      if (field && field.id !== 'noteInput') return;
+      const items = (e.clipboardData && e.clipboardData.items) ? Array.from(e.clipboardData.items) : [];
+      const imageItem = items.find(it => it.kind === 'file' && it.type.startsWith('image/'));
+      if (!imageItem) return;
+      const file = imageItem.getAsFile();
+      if (!file) return;
+      e.preventDefault();
+      processPhotoFile(file);
+    });
+
     function openPhotoViewer(id) {
-      const note = notesData.find(n => n.id === id);
+      const note = notesData.find(n => n.id === id) || classNotes.find(n => n.id === id);
       if (!note || !isSafeImageDataUrl(note.photo)) return;
       document.getElementById('photoViewerImg').src = note.photo;
       document.getElementById('photoViewerCaption').textContent = `[${note.topic}] ${note.text}`;
@@ -2134,6 +2376,16 @@
         ? `<button onclick="sendNoteToAi(${id})" class="px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded-lg text-xs transition">🤖 AI解説</button>`
         : `<button onclick="sendNoteToAi(${id})" title="AI解説は準備中です" class="px-2.5 py-1.5 bg-slate-50 text-slate-400 border border-dashed border-slate-300 font-bold rounded-lg text-xs cursor-not-allowed">🤖 AI解説（準備中）</button>`;
 
+      // クラス共有（GAS）の送信状態。取り込んだ他人のメモ（from あり）は送らない
+      const gasOn = !!getGasConfig().url;
+      const syncBtn = (n) => {
+        if (n.from) return '';
+        if (n.synced === true) return `<span class="px-2 py-1 text-xs font-bold text-sky-700 bg-sky-50 rounded-lg">☁ 送信済</span>`;
+        if (!gasOn) return '';
+        if (n.synced === false) return `<button onclick="syncNoteToClass(${n.id})" class="px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 font-bold rounded-lg text-xs transition">⚠ 未送信・再送</button>`;
+        return `<button onclick="syncNoteToClass(${n.id})" class="px-2.5 py-1.5 bg-sky-50 hover:bg-sky-100 text-sky-700 font-bold rounded-lg text-xs transition">☁ 共有に送る</button>`;
+      };
+
       list.innerHTML = notesData.map(n => `
         <div class="bg-white p-4 rounded-xl shadow-sm border ${n.resolved ? 'border-slate-200 opacity-65' : 'border-indigo-200'} flex flex-col md:flex-row justify-between gap-3">
           <div class="space-y-1.5 flex-1 min-w-0">
@@ -2153,6 +2405,8 @@
               </button>` : ''}
           </div>
           <div class="flex flex-wrap items-center gap-1.5 shrink-0">
+            ${syncBtn(n)}
+            <button onclick="openReviewCalendar(${n.id})" title="この問題の復習予定をGoogleカレンダーに追加" class="px-2.5 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200 font-bold rounded-lg text-xs transition">📅 復習</button>
             ${aiBtn(n.id)}
             <button onclick="editNoteText(${n.id})" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-xs transition">編集</button>
             <button onclick="toggleNoteResolved(${n.id})" class="px-2.5 py-1.5 ${n.resolved ? 'bg-slate-200 text-slate-700' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'} font-bold rounded-lg text-xs transition">
@@ -2384,6 +2638,424 @@
       return String(str).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
     }
 
+    /* ==================== 4-B. クラス共有（Google Apps Script 連携） ==================== */
+    const GAS_URL_KEY = 'math_lab_gas_url';
+    const GAS_ROOM_KEY = 'math_lab_gas_room';
+    const GAS_SEND_KEY = 'math_lab_gas_send';
+    const TEACHER_MODE_KEY = 'math_lab_teacher_mode';
+    const CLASS_AUTO_KEY = 'math_lab_class_auto';
+    const DEFAULT_ROOM = 'math-class';
+    const CLASS_POLL_MS = 8000;
+    const CLASS_MAX_ITEMS = 300;
+
+    let classNotes = [];          // 先生側で取得した投稿（メモリ上のみ。端末の保存容量を圧迫しない）
+    let classSince = 1;           // 取得済みの最終行（シートの1行目は見出し）
+    let classFetching = false;
+    let classLoadedOnce = false;
+    let classLastUpdated = null;
+    let classError = '';
+    let classConfigKey = '';
+
+    function lsGet(key) {
+      try { return localStorage.getItem(key) || ''; } catch (e) { return ''; }
+    }
+
+    function lsSet(key, value) {
+      try {
+        if (value === null || value === '') localStorage.removeItem(key);
+        else localStorage.setItem(key, value);
+      } catch (e) {}
+    }
+
+    // 送信先は Google Apps Script のWebアプリURLだけに限定する
+    function isValidGasUrl(url) {
+      return /^https:\/\/script\.google\.com\/(?:a\/macros\/[A-Za-z0-9.-]+|macros)\/s\/[A-Za-z0-9_-]+\/exec$/.test(url);
+    }
+
+    function isValidRoom(room) {
+      return /^[A-Za-z0-9_-]{1,40}$/.test(room);
+    }
+
+    function getGasConfig() {
+      const url = lsGet(GAS_URL_KEY);
+      const room = lsGet(GAS_ROOM_KEY);
+      return { url: isValidGasUrl(url) ? url : '', room: isValidRoom(room) ? room : DEFAULT_ROOM };
+    }
+
+    function isTeacherMode() {
+      return lsGet(TEACHER_MODE_KEY) === '1';
+    }
+
+    function isClassAuto() {
+      return lsGet(CLASS_AUTO_KEY) !== '0';
+    }
+
+    async function fetchWithTimeout(url, options, ms) {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), ms);
+      try {
+        return await fetch(url, { ...options, signal: ctrl.signal });
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+
+    function gasErrorMessage(err) {
+      if (err && err.name === 'AbortError') return '応答がありませんでした（タイムアウト）。通信状況を確認してください。';
+      if (err instanceof TypeError) return '通信できませんでした。インターネット接続、GAS URL、デプロイ時の「アクセスできるユーザー：全員」を確認してください。';
+      return (err && err.message) || '不明なエラーが発生しました。';
+    }
+
+    async function parseGasResponse(res) {
+      const text = await res.text();
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (e) {
+        throw new Error('GASの応答を読み取れませんでした。デプロイの「アクセスできるユーザー」が「全員」になっているか、URLが「/exec」で終わっているか確認してください。');
+      }
+      if (!data || data.ok !== true) {
+        throw new Error('GASでエラーが発生しました：' + String((data && data.error) || `HTTP ${res.status}`).slice(0, 200));
+      }
+      return data;
+    }
+
+    async function gasGet(cfg, params) {
+      const qs = new URLSearchParams(params).toString();
+      const res = await fetchWithTimeout(`${cfg.url}?${qs}`, { method: 'GET', redirect: 'follow', cache: 'no-store' }, 15000);
+      return parseGasResponse(res);
+    }
+
+    // text/plain で送るとCORSのプリフライトが発生せず、GASでも受け取れる
+    async function gasPost(cfg, body) {
+      const res = await fetchWithTimeout(cfg.url, {
+        method: 'POST',
+        redirect: 'follow',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(body)
+      }, 30000);
+      return parseGasResponse(res);
+    }
+
+    function setNoteSyncStatus(message, kind) {
+      const el = document.getElementById('noteSyncStatus');
+      if (!el) return;
+      const cls = { ok: 'text-sky-700', warn: 'text-amber-700', error: 'text-rose-700', info: 'text-slate-500' }[kind] || 'text-slate-500';
+      el.className = `text-xs font-bold whitespace-pre-line ${cls}`;
+      el.textContent = message;
+    }
+
+    async function syncNoteToClass(id) {
+      const cfg = getGasConfig();
+      if (!cfg.url) return alert('クラス共有のGAS URLが未設定です。右上の「⚙ 設定」から登録してください。');
+      const note = notesData.find(n => n.id === id);
+      if (!note || note.from) return;
+      setNoteSyncStatus('☁ クラス共有に送信中...', 'info');
+      try {
+        const data = await gasPost(cfg, {
+          action: 'post',
+          room: cfg.room,
+          note: {
+            uid: note.uid,
+            from: lsGet(STUDENT_NAME_KEY).slice(0, 30),
+            topic: note.topic,
+            type: note.type,
+            text: note.text,
+            resolved: note.resolved,
+            createdAt: note.createdAt,
+            photo: isSafeImageDataUrl(note.photo) ? note.photo : null
+          }
+        });
+        note.synced = true;
+        setNoteSyncStatus(data.duplicate ? '☁ すでに先生の画面に届いています。' : '☁ 先生の画面（クラス共有）に送信しました。', 'ok');
+      } catch (err) {
+        note.synced = false;
+        setNoteSyncStatus(`⚠ メモはこの端末に保存済みです。クラス共有への送信に失敗しました：${gasErrorMessage(err)}\n（メモの「⚠ 未送信・再送」から送り直せます）`, 'error');
+      }
+      saveNotesStorage();
+    }
+
+    function saveGasSendPref() {
+      lsSet(GAS_SEND_KEY, document.getElementById('gasSendChk').checked ? '1' : '0');
+    }
+
+    function saveGasConfig() {
+      const url = document.getElementById('gasUrlInput').value.trim();
+      const roomRaw = document.getElementById('gasRoomInput').value.trim();
+      if (url && !isValidGasUrl(url)) {
+        return showStatus('gasConfigStatus', 'URLの形式が正しくありません。「https://script.google.com/macros/s/…/exec」の形のWebアプリURLを貼り付けてください。', 'error');
+      }
+      if (roomRaw && !isValidRoom(roomRaw)) {
+        return showStatus('gasConfigStatus', 'ルームIDは英数字・ハイフン(-)・アンダースコア(_)で40文字以内にしてください。', 'error');
+      }
+      lsSet(GAS_URL_KEY, url);
+      lsSet(GAS_ROOM_KEY, roomRaw && roomRaw !== DEFAULT_ROOM ? roomRaw : '');
+      applyGasUi();
+      showStatus('gasConfigStatus', url ? `✅ 共有設定を保存しました（ルーム：${getGasConfig().room}）。「接続テスト」で確認できます。` : '共有URLを空で保存しました（クラス共有はオフ）。', 'ok');
+    }
+
+    function clearGasConfig() {
+      lsSet(GAS_URL_KEY, '');
+      lsSet(GAS_ROOM_KEY, '');
+      document.getElementById('gasUrlInput').value = '';
+      document.getElementById('gasRoomInput').value = DEFAULT_ROOM;
+      applyGasUi();
+      showStatus('gasConfigStatus', 'クラス共有の設定を削除しました。', 'ok');
+    }
+
+    async function testGasConnection() {
+      const url = document.getElementById('gasUrlInput').value.trim();
+      if (!isValidGasUrl(url)) {
+        return showStatus('gasConfigStatus', '先に正しい形式のGAS WebアプリURL（…/exec）を入力してください。', 'error');
+      }
+      showStatus('gasConfigStatus', '接続を確認しています...', 'info');
+      try {
+        const data = await gasGet({ url }, { action: 'ping' });
+        if (data.app !== 'math-lab-share') throw new Error('このURLはクラス共有用のGASではないようです（コードを確認してください）。');
+        showStatus('gasConfigStatus', '✅ 接続できました。「共有設定を保存」を押して使い始めてください。', 'ok');
+      } catch (err) {
+        showStatus('gasConfigStatus', '❌ ' + gasErrorMessage(err), 'error');
+      }
+    }
+
+    function copyGasCode() {
+      const code = document.getElementById('gasCodeTemplate').textContent.trim();
+      copyText(code)
+        .then(() => showStatus('gasConfigStatus', '📋 GAS用コードをコピーしました。スプレッドシートの［拡張機能］→［Apps Script］に貼り付けてください。', 'ok'))
+        .catch(() => showStatus('gasConfigStatus', 'コピーできませんでした。リポジトリの index.html 内「gasCodeTemplate」のコードを使ってください。', 'warn'));
+    }
+
+    function setTeacherMode(on) {
+      lsSet(TEACHER_MODE_KEY, on ? '1' : '');
+      document.getElementById('teacherModeChk').checked = !!on;
+      if (!on) {
+        classNotes = [];
+        classSince = 1;
+        classLoadedOnce = false;
+      }
+      renderClassBoard();
+      if (on) refreshClassBoard(true);
+    }
+
+    function setClassAuto(on) {
+      lsSet(CLASS_AUTO_KEY, on ? '' : '0');
+      document.getElementById('classAutoChk').checked = !!on;
+      renderClassBoard();
+    }
+
+    // 共有設定に合わせて画面の表示を切り替える
+    function applyGasUi() {
+      const cfg = getGasConfig();
+      const key = `${cfg.url}|${cfg.room}`;
+      if (key !== classConfigKey) {
+        classConfigKey = key;
+        classNotes = [];
+        classSince = 1;
+        classLoadedOnce = false;
+        classError = '';
+        classLastUpdated = null;
+      }
+      document.getElementById('gasSendWrap').classList.toggle('hidden', !cfg.url);
+      document.getElementById('gasSendChk').checked = lsGet(GAS_SEND_KEY) !== '0';
+      document.getElementById('teacherModeChk').checked = isTeacherMode();
+      document.getElementById('classAutoChk').checked = isClassAuto();
+      updateApiUi();
+      renderNotes();
+      renderClassBoard();
+    }
+
+    async function refreshClassBoard(manual) {
+      const cfg = getGasConfig();
+      if (!cfg.url || !isTeacherMode() || classFetching) return;
+      const key = classConfigKey;
+      classFetching = true;
+      if (manual) renderClassBoard('取得中...');
+      try {
+        let added = 0;
+        for (let page = 0; page < 5; page++) {
+          const data = await gasGet(cfg, { action: 'list', room: cfg.room, since: classSince, limit: 30 });
+          if (key !== classConfigKey) return; // 取得中に設定が変わった
+          // シートが消去された等で行数が減ったら最初から取り直す
+          if (Number.isSafeInteger(data.total) && data.total < classSince && classSince > 1) {
+            classNotes = [];
+            classSince = 1;
+            continue;
+          }
+          const known = new Set(classNotes.map(n => n.uid));
+          (Array.isArray(data.notes) ? data.notes : []).forEach(raw => {
+            const note = sanitizeNote(raw, false);
+            if (!note || known.has(note.uid)) return;
+            known.add(note.uid);
+            note.seq = Number.isSafeInteger(raw.seq) ? raw.seq : 0;
+            note.receivedAt = String(raw.receivedAt ?? '').slice(0, 40);
+            note.newUntil = classLoadedOnce ? Date.now() + 60000 : 0;
+            classNotes.push(note);
+            added++;
+          });
+          if (Number.isSafeInteger(data.last) && data.last > classSince) classSince = data.last;
+          if (!data.more) break;
+        }
+        classNotes.sort((a, b) => b.seq - a.seq);
+        if (classNotes.length > CLASS_MAX_ITEMS) classNotes.length = CLASS_MAX_ITEMS;
+        const now = Date.now();
+        let expired = false;
+        classNotes.forEach(n => {
+          if (n.newUntil && n.newUntil <= now) { n.newUntil = 0; expired = true; }
+        });
+        const wasLoaded = classLoadedOnce;
+        const hadError = !!classError;
+        classLoadedOnce = true;
+        classLastUpdated = new Date();
+        classError = '';
+        // 変化がなければ一覧（写真）は描き直さず、状態表示だけ更新する
+        renderClassBoard('', wasLoaded && !added && !expired && !hadError && !manual);
+      } catch (err) {
+        if (key === classConfigKey) {
+          classError = gasErrorMessage(err);
+          renderClassBoard();
+        }
+      } finally {
+        classFetching = false;
+      }
+    }
+
+    function renderClassBoard(statusOverride, statusOnly) {
+      const cfg = getGasConfig();
+      const teacher = isTeacherMode();
+      const status = document.getElementById('classBoardStatus');
+      const list = document.getElementById('classBoardList');
+      document.getElementById('classBoardSetupHint').classList.toggle('hidden', !!cfg.url);
+      document.getElementById('classBoardControls').classList.toggle('hidden', !cfg.url);
+
+      if (!cfg.url) {
+        status.textContent = 'クラス共有は未設定です。';
+        list.innerHTML = '';
+        return;
+      }
+      if (!teacher) {
+        status.textContent = `ルーム「${cfg.room}」に接続中。先生の端末では「先生モード」をオンにすると生徒の投稿が表示されます。`;
+        list.innerHTML = '';
+        return;
+      }
+
+      const parts = [`ルーム「${cfg.room}」・${classNotes.length}件`];
+      if (statusOverride) parts.push(statusOverride);
+      else if (classLastUpdated) parts.push(`最終更新 ${classLastUpdated.toLocaleTimeString('ja-JP')}`);
+      parts.push(isClassAuto() ? '自動更新ON（この画面を表示中のみ）' : '自動更新OFF');
+      if (classError) parts.push('⚠ ' + classError);
+      status.textContent = parts.join('　');
+      status.className = `text-xs ${classError ? 'text-rose-700 font-bold' : 'text-slate-500'}`;
+      if (statusOnly) return;
+
+      if (classNotes.length === 0) {
+        list.innerHTML = `<div class="p-6 rounded-xl border border-dashed border-slate-300 text-center text-sm text-slate-400">${classLoadedOnce ? 'まだ投稿はありません。生徒がメモを送信すると、ここに数秒で表示されます。' : '読み込み中...'}</div>`;
+        return;
+      }
+
+      const now = Date.now();
+      list.innerHTML = classNotes.map(n => `
+        <div class="p-3.5 rounded-xl border ${n.newUntil > now ? 'border-emerald-400 bg-emerald-50/60' : 'border-slate-200 bg-slate-50'} flex flex-col md:flex-row justify-between gap-3">
+          <div class="space-y-1.5 flex-1 min-w-0">
+            <div class="flex flex-wrap items-center gap-2">
+              ${n.newUntil > now ? '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-600 text-white">NEW</span>' : ''}
+              <span class="text-xs font-bold px-2 py-0.5 rounded bg-sky-100 text-sky-800">👤 ${escapeHtml(n.from || '名前なし')}</span>
+              <span class="text-xs font-bold px-2 py-0.5 rounded bg-indigo-50 text-indigo-700">${escapeHtml(n.topic)}</span>
+              <span class="text-xs font-bold px-2 py-0.5 rounded ${n.type === 'question' ? 'bg-rose-50 text-rose-700' : 'bg-amber-50 text-amber-800'}">${n.type === 'question' ? '❓ 質問' : '💡 ポイント'}</span>
+              <span class="text-xs text-slate-400">${escapeHtml(n.createdAt)}</span>
+            </div>
+            <p class="text-sm font-medium text-slate-800 break-words whitespace-pre-wrap">${escapeHtml(n.text)}</p>
+            ${isSafeImageDataUrl(n.photo) ? `
+              <button onclick="openPhotoViewer(${n.id})" class="inline-flex flex-col items-start gap-0.5" title="タップで拡大">
+                <img src="${escapeHtml(n.photo)}" alt="生徒の添付写真" class="h-28 max-w-[220px] object-cover rounded-lg border border-slate-300 hover:opacity-90">
+                <span class="text-[11px] text-slate-500">🔍 タップで拡大</span>
+              </button>` : ''}
+          </div>
+          <div class="flex flex-wrap items-start gap-1.5 shrink-0">
+            <button onclick="saveClassNoteLocally(${n.id})" class="px-2.5 py-1.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 font-bold rounded-lg text-xs transition">📥 自分のメモに保存</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function saveClassNoteLocally(id) {
+      const n = classNotes.find(c => c.id === id);
+      if (!n) return;
+      if (notesData.some(m => m.uid === n.uid)) return alert('このメモはすでに保存されています。');
+      const ok = addNoteRecord({
+        uid: n.uid, topic: n.topic, type: n.type, text: n.text,
+        resolved: n.resolved, createdAt: n.createdAt, from: n.from || '名前なし', photo: n.photo
+      });
+      if (ok) alert('自分の学習メモに保存しました。');
+    }
+
+    // タブ表示中かつ学習メモ画面を開いている間だけ自動取得する
+    function classPollTick() {
+      if (document.visibilityState !== 'visible') return;
+      const notesView = document.getElementById('notesModule');
+      if (!notesView || notesView.classList.contains('hidden')) return;
+      if (!isClassAuto()) {
+        const now = Date.now();
+        let expired = false;
+        classNotes.forEach(n => {
+          if (n.newUntil && n.newUntil <= now) { n.newUntil = 0; expired = true; }
+        });
+        if (expired) renderClassBoard();
+        return;
+      }
+      refreshClassBoard(false);
+    }
+
+    /* ---------- Googleカレンダーへの予定追加（リンクを開くだけ・外部SDK不要） ---------- */
+    function ymdCompact(d) {
+      return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
+    }
+
+    function ymdInput(d) {
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+
+    function buildCalendarUrl(title, dateStr, details) {
+      const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateStr || '');
+      const start = m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : new Date();
+      if (Number.isNaN(start.getTime())) return null;
+      const end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 1);
+      const params = new URLSearchParams({
+        action: 'TEMPLATE',
+        text: String(title).slice(0, 100),
+        dates: `${ymdCompact(start)}/${ymdCompact(end)}`,
+        details: String(details || '').slice(0, 1000)
+      });
+      return `https://calendar.google.com/calendar/render?${params.toString()}`;
+    }
+
+    function openCalendarUrl(url) {
+      if (!url) return alert('日付を正しく入力してください。');
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
+
+    function openCalendarFromWidget() {
+      const choice = document.getElementById('calTitle').value;
+      const date = document.getElementById('calDate').value;
+      let title = choice;
+      let details = '中学数学 総合マスター Lab で学習しよう。';
+      if (choice === 'unresolved') {
+        title = '復習：未解決の学習メモ';
+        const open = notesData.filter(n => !n.resolved).slice(0, 10);
+        details = open.length
+          ? '未解決のメモ：\n' + open.map(n => `・[${n.topic}] ${n.text.slice(0, 60)}`).join('\n')
+          : '未解決のメモはありません。テスト範囲の演習ドリルで復習しよう。';
+      }
+      openCalendarUrl(buildCalendarUrl(title, date, details));
+    }
+
+    function openReviewCalendar(id) {
+      const note = notesData.find(n => n.id === id);
+      if (!note) return;
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      openCalendarUrl(buildCalendarUrl(`復習：${note.topic}`, ymdInput(tomorrow), `学習メモの復習\n${note.text.slice(0, 300)}`));
+    }
+
     /* ==================== 5. Gemini API 連携（現行モデル自動リトライ＆フォールバック） ==================== */
     // AIチューター・類題作成は一時保留中（Coming Soon）。再開するときは true にする。
     // Gemini 呼び出しとモデルフォールバック処理（callGemini）はそのまま残している。
@@ -2407,19 +3079,19 @@
       const text = document.getElementById('apiStatusText');
       const banner = document.getElementById('aiNoKeyBanner');
 
-      if (key) {
-        dot.className = 'w-2 h-2 rounded-full bg-emerald-400';
-        text.textContent = 'API連携中';
-        banner.classList.add('hidden');
-      } else {
-        dot.className = 'w-2 h-2 rounded-full bg-amber-400';
-        text.textContent = 'API未設定';
-        banner.classList.remove('hidden');
-      }
+      banner.classList.toggle('hidden', !!key);
+      // AIチューターは保留中のため、ヘッダーの表示はクラス共有の設定状況を示す
+      const shared = !!getGasConfig().url;
+      dot.className = `w-2 h-2 rounded-full ${shared ? 'bg-emerald-400' : 'bg-slate-400'}`;
+      text.textContent = shared ? '☁ 共有ON・設定' : '⚙ 設定';
     }
 
     function openApiModal() {
       document.getElementById('apiKeyInput').value = localStorage.getItem('gemini_api_key') || '';
+      const cfg = getGasConfig();
+      document.getElementById('gasUrlInput').value = cfg.url;
+      document.getElementById('gasRoomInput').value = cfg.room;
+      document.getElementById('gasConfigStatus').classList.add('hidden');
       document.getElementById('apiModal').classList.remove('hidden');
     }
 
@@ -2614,6 +3286,14 @@
       drawProofSim();
       renderProofDrill();
       renderNotes();
+      applyGasUi();
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      document.getElementById('calDate').value = ymdInput(tomorrow);
+      setInterval(classPollTick, CLASS_POLL_MS);
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') classPollTick();
+      });
       checkRemoteUpdate(false);
     });
   </script>

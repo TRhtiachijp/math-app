@@ -57,13 +57,23 @@ APIキー不正エラー時は即座に中断し、それ以外のエラーは�
 - ブラウザから GitHub へ書き込む機能（Contents API への PUT、PAT の入力・保存）は**廃止済み**。再導入しないこと。
 
 ### 7. 学習メモの共有と写真
-- メモは各端末の `localStorage`（`math_lab_notes`）にのみ保存され、サーバー同期はない。生徒→先生の受け渡しは「共有コード」で行う。
+- メモは各端末の `localStorage`（`math_lab_notes`）に必ず保存する。生徒→先生の受け渡しは「共有コード」（常に使える）と、任意設定の「クラス共有（GAS）」の2通り。
   - 形式：`MATHLAB1:` + Base64(UTF-8 JSON)。JSON は `{ app: 'math-lab-notes', v: 1, from, exportedAt, notes: [...] }`。
   - 取り込み時は各メモを `sanitizeNote()` で検証・正規化し、`uid` で重複を除外する（単元・種別・解決状態・時刻・送信者名を保持）。メモの `id` は取り込み側で振り直す（`onclick` に埋め込むため安全な整数のみ）。
   - 共有データの形式を変える場合は `v` を上げ、旧形式も読めるようにすること。
 - 写真は Canvas で最大 800px・JPEG 品質 0.7 に縮小し、大きければさらに段階的に縮小して保存する。
 - 画像の `src` には `isSafeImageDataUrl()` を通過した `data:image/(jpeg|png|webp);base64,...` のみを使うこと（SVG・`javascript:` 等は不可）。
 - `localStorage` の容量オーバーは `commitNotes()` で検知して変更を元に戻す。取り込み時は写真を外して再試行する。
+- 写真はファイル選択・カメラ撮影・貼り付け（`paste` イベント／「📋 画像を貼り付け」ボタン）のすべてを `processPhotoFile()` に通す。
+
+### 8. クラス共有（Google Apps Script 連携）
+- サーバー側コードは `index.html` 内の `<script type="text/plain" id="gasCodeTemplate">` に置いている（実行されない。設定画面の「GAS用コードをコピー」で使う）。GAS側を変えたらここも更新し、利用者に再デプロイを案内すること。この中に `</script>` を書かないこと。
+- 設定（GAS WebアプリURL・ルームID）は端末の `localStorage` にのみ保存する。リポジトリにURLやIDを書き込まないこと。送信先は `isValidGasUrl()` で `https://script.google.com/.../exec` に限定する。
+- 生徒の投稿は**必ずローカル保存を先に行い**、その後に `gasPost()`（`Content-Type: text/plain` でCORSプリフライトを回避）で送る。失敗時はメモに `synced: false` を付けて再送ボタンを出す。
+- 先生側は「先生モード」のときだけ取得し、取得した投稿はメモリ上（`classNotes`）にだけ持つ。自動取得は8秒ごと、ページが表示中かつ学習メモ画面を開いているときだけ（`classPollTick()`）。差分取得（`since`＝シートの行番号）なので、授業中にシートの行を削除しないこと（シート全体の消去は検知して取り直す）。
+- シートの1セルは5万文字が上限のため、写真は45,000文字ごとに分割して保存する。セルの値は先頭に `'` を付けて保存し、数式や日付として解釈されないようにしている。
+- GASから受け取ったデータも `sanitizeNote()` を通し、表示には `escapeHtml()` を使う。
+- Googleカレンダー連携は `https://calendar.google.com/calendar/render?action=TEMPLATE...` のリンクを開くだけ（外部SDKは使わない）。
 
 ## Git運用ルール
 
